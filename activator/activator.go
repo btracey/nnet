@@ -19,49 +19,75 @@ type Activator interface {
 	DActivateDSum(sum float64, output float64) float64
 }
 
-// A sigmoid neuron has a sigmoid as the activation function
+// Sigmoid is an activation function which is the sigmoid function,
 // out = 1/(1 + exp(-sum))
 type Sigmoid struct{}
 
-// Computes the sigmoid activation function
+// Activate computes the sigmoid activation function
 func (a Sigmoid) Activate(sum float64) float64 {
 	return 1.0 / (1.0 + math.Exp(-sum))
 }
 
-// Computes the derivative of the activation function
+// DActivateDSum computes the derivative of the activation function
+// with respect to the weighted sum
 func (n Sigmoid) DActivateDSum(sum, output float64) float64 {
 	return output * (1 - output)
 }
 
-// Linear neuron has a linear activation function out = sum
+// Linear neuron has a the identity activation function out = sum
 type Linear struct{}
 
-// Computes the linear activation function
+// Activate computes the linear activation function
 func (a Linear) Activate(sum float64) float64 {
 	return sum
 }
 
-// Computes the derivative of the linear activation function
+// DActivateDSum computes the derivative of the linear activation function
+// with respect to the weighted sum
 func (a Linear) DActivateDSum(sum, output float64) float64 {
 	return 1.0
 }
 
-// Tanh has a tanh activation function. The constants are set to have a
-// range between -1 and 1
+const (
+	// http://www.wolframalpha.com/input/?i=1.7159+*+2%2F3
+	TanhDerivConst = 1.14393333333333333333333333333333333333333333333333333333333333333333
+	TwoThirds      = 0.66666666666666666666666666666666666666666666666666666666666666666666
+)
+
+// Source for tanh activation function:
+
+// Tanh has a tanh activation function. out = a tanh(b * sum). The constants
+// a and b are set so that tanh has a value of -1 and 1 when the sum = -1 and 1
+// respectively.
+// See: http://leon.bottou.org/slides/tricks/tricks.pdf for more description
 type Tanh struct{}
 
-// Computes the Tanh activation function
+// Activate computes the Tanh activation function
 func (a Tanh) Activate(sum float64) float64 {
 	return 1.7159 * math.Tanh(2.0/3.0*sum)
 }
 
-const (
-	// http://www.wolframalpha.com/input/?i=1.7159+*+2%2F3
-	TanhConst = 1.14393333333333333333333333333333333333333333333333333333333333333333
-	TwoThirds = 0.66666666666666666666666666666666666666666666666666666666666666666666
-)
-
-//Computes the derivative of the Tanh activation function
+// DActivateDSum computes the derivative of the Tanh activation function
+// with respect to the weighted sum
 func (a Tanh) DActivateDSum(sum, output float64) float64 {
-	return TanhConst * (1.0 - math.Tanh(TwoThirds*sum)*math.Tanh(TwoThirds*sum))
+	return TanhDerivConst * (1.0 - math.Tanh(TwoThirds*sum)*math.Tanh(TwoThirds*sum))
+}
+
+// Source for linear tanh activation function: http://leon.bottou.org/slides/tricks/tricks.pdf
+
+// LinearTahn is the Tanh activation function plus a small linear term (set to 0.01).
+// This linear term helps stabilize the weights so that they do not tend to infinity.
+// See: // See: http://leon.bottou.org/slides/tricks/tricks.pdf for more description
+type LinearTanh struct {
+}
+
+// Activate computes the LinearTanh activation function
+func (a LinearTanh) Activate(sum float64) float64 {
+	return 1.7159*math.Tanh(2.0/3.0*sum) + 0.01*sum
+}
+
+// DActivateDSum computes the derivative of the Tanh activation function
+// with respect to the weighted sum
+func (a LinearTanh) DActivateDSum(sum, output float64) float64 {
+	return TanhDerivConst*(1.0-math.Tanh(TwoThirds*sum)*math.Tanh(TwoThirds*sum)) + 0.01
 }

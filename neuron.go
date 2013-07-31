@@ -8,18 +8,46 @@ import (
 
 ///////////////////////////// Neurons
 
-// Neurons are the basic element of the neural net. They take
+// Neuron is the basic element of the neural net. They take
 // in a set of inputs, compute a weighted sum of those inputs
-// as set by neuron.weights, and then transforms that weighted
-// sum into an alternate float64 as defined by the activation function
+// (using Neuron.Weights), and then computes a function of the
+// weighted sum as defined by the activation function
 // The final weight is a bias term which is added at the end, so there
 // should be one more weight than the number of inputs
-// This type is made public for encoding, but is not intended to be used
-// remotely
-type Neuron struct {
-	Weights  []float64
+type neuron struct {
+	weights  []float64
 	nWeights int
 	activator.Activator
+}
+
+// newNeuron reates a new neuron with the given number of inputs and
+// activator function
+func newNeuron(nInputs int, a activator.Activator) {
+	return &neuron{
+		nWeights:  nInputs + 1,
+		weights:   make([]float64, nInputs+1),
+		Activator: a,
+	}
+}
+
+// Process computes the weighted sum of inputs and the activation function
+func (n *neuron) process(input []float64) (sum, output float64) {
+	for i, val := range input {
+		sum += val * n.Weights[i]
+	}
+	sum += n.Weights[n.nWeights-1] //Bias term
+	return sum, n.Activate(sum)
+}
+
+// Set the weights of the neuron to a random value
+func (n *neuron) randomizeWeights() {
+	// This specifc equation was chosen to have an expected sum
+	// to be between -1 and 1. Assuming the activation function also scales in this
+	// range that should be good
+	for i := range n.Weights {
+		n.Weights[i] = rand.NormFloat64() * math.Pow(float64(n.nWeights), -0.5)
+
+	}
 }
 
 // May want GobEncode in the future, still deciding on how we want
@@ -46,35 +74,3 @@ func (n *Neuron) GobDecode(buf []byte) (err error) {
 	return err
 }
 */
-
-// Compute the weighted sum and the activation function
-func (n *Neuron) Process(input []float64) (sum, output float64) {
-	for i, val := range input {
-		sum += val * n.Weights[i]
-	}
-	sum += n.Weights[n.nWeights-1] //Bias term
-	return sum, n.Activate(sum)
-}
-
-// Initialize a neuron with the given number of inputs and the activator
-// function
-func (n *Neuron) Initialize(nInputs int, r activator.Activator) {
-	n.Activator = r
-	n.nWeights = nInputs + 1 // Plus one is for the bias term
-	n.Weights = make([]float64, n.nWeights)
-	// I'm not sure if this should be here or not
-	n.RandomizeWeights()
-}
-
-// Should the neuron also have a weights randomizer? Probably not.
-
-// Set the weights of the neuron to a random value
-func (n *Neuron) RandomizeWeights() {
-	// This specifc equation was chosen to have an expected sum
-	// to be between -1 and 1. Assuming the activation function also scales in this
-	// range that should be good
-	for i := range n.Weights {
-		n.Weights[i] = rand.NormFloat64() * math.Pow(float64(n.nWeights), -0.5)
-
-	}
-}

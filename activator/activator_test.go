@@ -57,3 +57,21 @@ func TestTanh(t *testing.T) {
 		t.Errorf("Derivative does not match. %v expected, %v found", trueDeriv, deriv)
 	}
 }
+
+func TestLinearTanh(t *testing.T) {
+	s := LinearTanh{}
+	sum := 1.23456789
+	// const gotten from wolfram alpha
+	// http://www.wolframalpha.com/input/?i=1.7159+*+tanh%282%2F3+*+1.23456789%29+%2B+0.01+*+1.23456789
+	// http://www.wolframalpha.com/input/?i=1.14393333333333333333333333333333333333333333333333333333333333333333+*+sech%5E2%28%282+*+1.23456789%29%2F3%29+%2B+0.01
+	const trueOut = 1.1735362969541956173946145965239159139732343741372935
+	const trueDeriv = 0.6300630023283855667915281343653916910151758055270571
+	output := s.Activate(sum)
+	if math.Abs(output-float64(trueOut)) > 1E-15 {
+		t.Errorf("Activation output does not match. %v expected, %v found", trueOut, output)
+	}
+	deriv := s.DActivateDSum(sum, output)
+	if math.Abs(deriv-float64(trueDeriv)) > 1E-15 {
+		t.Errorf("Derivative does not match. %v expected, %v found", trueDeriv, deriv)
+	}
+}
