@@ -19,7 +19,7 @@ func TestSigmoid(t *testing.T) {
 	if math.Abs(output-float64(trueOut)) > 1E-15 {
 		t.Errorf("Activation output does not match. %v expected, %v found", trueOut, output)
 	}
-	deriv := s.DActivateDSum(sum, output)
+	deriv := s.DActivateDCombination(sum, output)
 	if math.Abs(deriv-float64(trueDeriv)) > 1E-15 {
 		t.Errorf("Derivative does not match. %v expected, %v found", trueDeriv, deriv)
 	}
@@ -34,7 +34,7 @@ func TestLinear(t *testing.T) {
 	if math.Abs(output-trueOut) > 1E-15 {
 		t.Errorf("Activation output does not match. %v expected, %v found", trueOut, output)
 	}
-	deriv := s.DActivateDSum(sum, output)
+	deriv := s.DActivateDCombination(sum, output)
 	if math.Abs(deriv-trueDeriv) > 1E-15 {
 		t.Errorf("Derivative does not match. %v expected, %v found", trueDeriv, deriv)
 	}

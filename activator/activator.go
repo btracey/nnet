@@ -16,7 +16,7 @@ import "math"
 // to compute given one value or the other.
 type Activator interface {
 	Activate(sum float64) float64
-	DActivateDSum(sum float64, output float64) float64
+	DActivateDCombination(sum float64, output float64) float64
 }
 
 // Sigmoid is an activation function which is the sigmoid function,
@@ -30,7 +30,7 @@ func (a Sigmoid) Activate(sum float64) float64 {
 
 // DActivateDSum computes the derivative of the activation function
 // with respect to the weighted sum
-func (n Sigmoid) DActivateDSum(sum, output float64) float64 {
+func (n Sigmoid) DActivateDCombination(sum, output float64) float64 {
 	return output * (1 - output)
 }
 
@@ -44,7 +44,7 @@ func (a Linear) Activate(sum float64) float64 {
 
 // DActivateDSum computes the derivative of the linear activation function
 // with respect to the weighted sum
-func (a Linear) DActivateDSum(sum, output float64) float64 {
+func (a Linear) DActivateDCombination(sum, output float64) float64 {
 	return 1.0
 }
 
@@ -69,7 +69,7 @@ func (a Tanh) Activate(sum float64) float64 {
 
 // DActivateDSum computes the derivative of the Tanh activation function
 // with respect to the weighted sum
-func (a Tanh) DActivateDSum(sum, output float64) float64 {
+func (a Tanh) DActivateDCombination(sum, output float64) float64 {
 	return TanhDerivConst * (1.0 - math.Tanh(TwoThirds*sum)*math.Tanh(TwoThirds*sum))
 }
 
@@ -88,6 +88,6 @@ func (a LinearTanh) Activate(sum float64) float64 {
 
 // DActivateDSum computes the derivative of the Tanh activation function
 // with respect to the weighted sum
-func (a LinearTanh) DActivateDSum(sum, output float64) float64 {
+func (a LinearTanh) DActivateDCombination(sum, output float64) float64 {
 	return TanhDerivConst*(1.0-math.Tanh(TwoThirds*sum)*math.Tanh(TwoThirds*sum)) + 0.01
 }

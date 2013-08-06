@@ -1,7 +1,7 @@
 package nnet
 
 import (
-	"github.com/btracey/nnet/nnet/loss"
+	"github.com/btracey/nnet/loss"
 )
 
 // Net is the structure representing a feed-forward artificial network.
