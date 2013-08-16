@@ -1,7 +1,7 @@
 package nnet
 
 import (
-	"github.com/btracey/nnet/nnet/loss"
+	"github.com/btracey/nnet/loss"
 	"github.com/gonum/floats"
 	"testing"
 )
@@ -28,15 +28,22 @@ func TestProcessNeuron(t *testing.T) {
 
 func TestNetPredict(t *testing.T) {
 	net := DefaultRegression(3, 2, 2, 4)
+	net.InputMean = make([]float64, 3)
+	net.InputStd = []float64{1, 1, 1}
+	net.OutputMean = make([]float64, 2)
+	net.OutputStd = []float64{1, 1}
 	input := []float64{1, 2, 3}
 	net.RandomizeParameters()
 
-	predOutput1 := make([]float64, net.Outputs())
+	//predOutput1 := make([]float64, net.Outputs())
 	predOutput2 := make([]float64, net.Outputs())
 
 	predictTmpMemory := net.NewPredictTmpMemory()
 
-	net.Predict(input, predOutput1, predictTmpMemory)
+	predOutput1, err := net.Predict(input)
+	if err != nil {
+		t.Errorf("Error predicting")
+	}
 
 	Predict(input, net, predOutput2, predictTmpMemory.combinations, predictTmpMemory.outputs)
 

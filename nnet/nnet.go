@@ -2,6 +2,10 @@ package nnet
 
 import (
 	"github.com/btracey/nnet/loss"
+	"github.com/btracey/nnet/scale"
+
+	"errors"
+	"sync"
 )
 
 // Net is the structure representing a feed-forward artificial network.
@@ -20,6 +24,11 @@ type Net struct {
 	totalNumParameters int
 	nParameters        [][]int // Number of parameters per neuron
 	parameterIdx       [][]int // The starting index of the weights of the neuron
+
+	InputMean  []float64 // Scale set by training
+	InputStd   []float64 // Scale set by training
+	OutputMean []float64 // Scale set by training
+	OutputStd  []float64 // Scale set by training
 }
 
 // NewNet creates a new net
@@ -63,6 +72,7 @@ func NewNet(nInputs int, layers []Layer) *Net {
 		}
 	}
 	net.nOutputs = len(layers[len(layers)-1].Neurons)
+	net.RandomizeParameters()
 	return net
 }
 
@@ -157,14 +167,58 @@ func (net *Net) NewPerInputMemory() [][][]float64 {
 
 // Predict predicts the value at the input location. Panics if
 // len(input) != net.NumInputs() and if len(output) != net.NumOutputs()
-func (net *Net) Predict(input, predOutput []float64, predictTmpMemory *PredictTmpMemory) {
+func (net *Net) Predict(input []float64) (pred []float64, err error) {
 	if len(input) != net.nInputs {
-		panic("length of input must equal net.Inputs()")
+		return nil, errors.New("Length of input must match net.nOutputs")
 	}
-	if len(predOutput) != net.nOutputs {
-		panic("length of input must equal net.Outputs()")
-	}
+
+	predOutput := make([]float64, net.nOutputs)
+	predictTmpMemory := net.NewPredictTmpMemory()
+
+	scale.ScalePoint(input, net.InputMean, net.InputStd)
+	defer scale.UnscalePoint(input, net.InputMean, net.InputStd)
+
 	Predict(input, net, predOutput, predictTmpMemory.combinations, predictTmpMemory.outputs)
+	scale.UnscalePoint(predOutput, net.OutputMean, net.OutputStd)
+	return predOutput, nil
+}
+
+func (net *Net) PredictSlice(inputs [][]float64) (predictions [][]float64, err error) {
+	for _, input := range inputs {
+		if len(input) != net.nInputs {
+			return nil, errors.New("Lengths of all the inputs must match net.nInputs")
+		}
+	}
+	predictions = make([][]float64, len(inputs))
+	for i := range predictions {
+		predictions[i] = make([]float64, net.nOutputs)
+	}
+
+	w := sync.WaitGroup{}
+	// Predict samples in parallel
+	chunkSize := 100
+	count := 0
+	var endInd int
+	for {
+		if count+chunkSize > len(inputs) {
+			endInd = len(inputs)
+		} else {
+			endInd = count + chunkSize
+		}
+		w.Add(1)
+		go func(startInd, endInd int) {
+			p := net.NewPredictTmpMemory()
+			for i := startInd; i < endInd; i++ {
+				Predict(inputs[i], net, predictions[i], p.combinations, p.outputs)
+			}
+			w.Done()
+		}(count, endInd)
+		if endInd == len(inputs) {
+			break
+		}
+		count += chunkSize
+	}
+	return predictions, nil
 }
 
 type PredictTmpMemory struct {
@@ -201,7 +255,7 @@ func DefaultRegression(nInputs, nOutputs, nHiddenLayers, nNeuronsPerHiddenLayer 
 	for i := 0; i < nHiddenLayers; i++ {
 		layers[i].Neurons = make([]Neuron, nNeuronsPerHiddenLayer)
 		for j := range layers[i].Neurons {
-			layers[i].Neurons[j] = &LinearTanhNeuron
+			layers[i].Neurons[j] = &TanhNeuron
 		}
 	}
 	// All of the output layers should be linear (for regression)
@@ -256,6 +310,7 @@ func ProcessLayer(layer *Layer, parameters [][]float64, inputs []float64, combin
 
 // Predict feeds the input through the network and stores the prediction into predOutput.
 // It caches the weighted sums and outputs (for example, for use with PredictWithDerivative)
+// Assumes the input is appropriately scaled
 func Predict(input []float64, net *Net, predOutput []float64, combinations, outputs [][]float64) {
 	nLayers := len(net.layers)
 

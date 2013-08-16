@@ -1,19 +1,19 @@
 // package par implements computing loss and derivative in parallel. Right now just has shared-memory parallel,
 // but should eventually have more
-package par
+package nnet
 
 import (
-	"github.com/btracey/nnet/nnet"
+//"fmt"
 )
 
 type ParLossDerivMemory struct {
-	derivTmp           *nnet.PredLossDerivTmpMemory
+	derivTmp           *PredLossDerivTmpMemory
 	predictionTmp      []float64
 	dLossDParamTmp     [][][]float64
 	dLossDParamTmpFlat []float64
 }
 
-func NewParLossDerivMemory(net *nnet.Net) *ParLossDerivMemory {
+func NewParLossDerivMemory(net *Net) *ParLossDerivMemory {
 	p := &ParLossDerivMemory{
 		derivTmp:      net.NewPredLossDerivTmpMemory(),
 		predictionTmp: make([]float64, net.Outputs()),
@@ -22,13 +22,16 @@ func NewParLossDerivMemory(net *nnet.Net) *ParLossDerivMemory {
 	return p
 }
 
-func SeqLossDeriv(inputs, truths [][]float64, net *nnet.Net, dLossDParam [][][]float64, p *ParLossDerivMemory) (loss float64) {
+func SeqLossDeriv(inputs, truths [][]float64, net *Net, dLossDParam [][][]float64, p *ParLossDerivMemory) (loss float64) {
 	// Compute first loss and store in it dLossDParam
-	loss = nnet.PredLossDeriv(inputs[0], truths[0], net, p.derivTmp, p.predictionTmp, dLossDParam)
+	loss = PredLossDeriv(inputs[0], truths[0], net, p.derivTmp, p.predictionTmp, dLossDParam)
 	// Sum up the next losses and derivatives
 	for i := 1; i < len(inputs); i++ {
-		newLoss := nnet.PredLossDeriv(inputs[i], truths[i], net, p.derivTmp, p.predictionTmp, p.dLossDParamTmp)
+		newLoss := PredLossDeriv(inputs[i], truths[i], net, p.derivTmp, p.predictionTmp, p.dLossDParamTmp)
 
+		//fmt.Println("input", inputs[i])
+		//fmt.Println("truth", truths[i])
+		//fmt.Println("pred", p.predictionTmp)
 		loss += newLoss
 		for i, lay := range p.dLossDParamTmp {
 			for j, neur := range lay {
@@ -46,9 +49,7 @@ type Result struct {
 	loss        float64
 }
 
-func ParLossDeriv(inputs, truths [][]float64, net *nnet.Net, dLossDParam [][][]float64, chunkSize int) (loss float64) {
-
-	fmt.Println("Starting par loss")
+func ParLossDeriv(inputs, truths [][]float64, net *Net, dLossDParam [][][]float64, chunkSize int) (loss float64) {
 	// Zero out dLossDParam
 	for i, lay := range dLossDParam {
 		for j, neur := range lay {
@@ -85,8 +86,6 @@ func ParLossDeriv(inputs, truths [][]float64, net *nnet.Net, dLossDParam [][][]f
 
 	for i := 0; i < nSent; i++ {
 		r := <-receiveChan
-		fmt.Println("Received from channel")
-
 		loss += r.loss
 		for i, lay := range r.dLossDParam {
 			for j, neur := range lay {

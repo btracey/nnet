@@ -1,7 +1,7 @@
 package nnet
 
 import (
-	"github.com/btracey/nnet/nnet/activator"
+	"github.com/btracey/nnet/activator"
 	"github.com/gonum/floats"
 	"math"
 	"testing"
