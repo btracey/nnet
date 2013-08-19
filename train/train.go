@@ -59,6 +59,7 @@ type OneFoldTrain struct {
 
 	KeepHistory bool // Keep the test loss history
 	History     []float64
+	nCalls      int
 }
 
 func NewOneFoldTrain(net *nnet.Net, losser loss.Losser, inputs, outputs [][]float64) *OneFoldTrain {
@@ -205,6 +206,7 @@ func (o *OneFoldTrain) ObjGrad(weights []float64) (loss float64, deriv []float64
 	o.lossRatio = o.testLoss / o.trainLoss
 
 	o.AddToHistory(o.testLoss)
+	//	fmt.Println()
 
 	//fmt.Println("Done waiting")
 	//fmt.Println("trainLoss", o.trainLoss)
