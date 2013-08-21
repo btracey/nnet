@@ -51,3 +51,22 @@ func (m ManhattanDistance) LossAndDeriv(prediction, truth, derivative []float64)
 	loss /= float64(len(prediction))
 	return loss
 }
+
+type RelativeSquared struct {
+	Epsilon float64
+}
+
+func (r *RelativeSquared) LossAndDeriv(prediction, truth, derivative []float64) (loss float64) {
+	nSamples := float64(len(prediction))
+	for i := range prediction {
+		denom := math.Abs(truth[i]) + r.Epsilon
+		diff := prediction[i] - truth[i]
+
+		diffOverDenom := diff / denom
+
+		loss += diffOverDenom * diffOverDenom
+		derivative[i] = 2 * diffOverDenom / denom / nSamples
+	}
+	loss /= nSamples
+	return loss
+}
