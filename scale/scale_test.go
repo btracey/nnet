@@ -10,7 +10,7 @@ import (
 func testLinear(t *testing.T, kind linearTest) {
 	u := &Linear{}
 	err := u.SetScale(kind.data)
-	fmt.Println("Error test nil?", err == nil)
+	fmt.Println("In test: is nil?", err == nil)
 
 	if err != nil {
 		if kind.eqDim != true {

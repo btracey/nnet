@@ -143,26 +143,20 @@ func (l *Linear) SetScale(data [][]float64) error {
 	l.Scaled = true
 	l.Dim = dim
 
-	fmt.Println(l.Min)
-	fmt.Println(l.Max)
-
 	var unifError *UniformDimension
-	fmt.Println("unif one", unifError)
-	fmt.Println("is nil", unifError == nil)
 
 	// Check that the maximum and minimum values are not identical
 	for i := range l.Min {
 		if l.Min[i] == l.Max[i] {
-			if err == nil {
-				err = &UniformDimension{}
+			if unifError == nil {
+				unifError = &UniformDimension{}
 			}
 			unifError.Dims = append(unifError.Dims, i)
 			l.Min[i] -= 0.5
 			l.Max[i] += 0.5
 		}
 	}
-	fmt.Println(unifError)
-	fmt.Println("is nil two", unifError == nil)
+	fmt.Println("In program, is nil?", unifError == nil)
 	return unifError
 }
 
