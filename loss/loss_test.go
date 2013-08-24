@@ -84,3 +84,20 @@ func TestRelativeSquared(t *testing.T) {
 		t.Errorf("Derivative doesn't match. \n deriv: %v \n fdDeriv: %v ", derivative, fdDerivative)
 	}
 }
+
+func TestLogSquared(t *testing.T) {
+	prediction := []float64{1, -2, 3}
+	truth := []float64{1.1, -2.2, 2.7}
+	trueloss := (math.Log(.1*.1+1) + math.Log(.2*.2+1) + math.Log(.3*.3+1)) / 3
+	derivative := []float64{0, 0, 0}
+
+	sq := &LogSquared{}
+	loss := sq.LossAndDeriv(prediction, truth, derivative)
+	if math.Abs(loss-trueloss) > TOL {
+		t.Errorf("Loss doesn't match. %v found, %v expected", loss, trueloss)
+	}
+	derivative, fdDerivative := finiteDifferenceLosser(sq, prediction, truth)
+	if !floats.Eq(derivative, fdDerivative, FDTol) {
+		t.Errorf("Derivative doesn't match. \n deriv: %v \n fdDeriv: %v ", derivative, fdDerivative)
+	}
+}

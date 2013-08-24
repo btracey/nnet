@@ -70,3 +70,17 @@ func (r *RelativeSquared) LossAndDeriv(prediction, truth, derivative []float64) 
 	loss /= nSamples
 	return loss
 }
+
+type LogSquared struct{}
+
+func (l LogSquared) LossAndDeriv(prediction, truth, deravitive []float64) (loss float64) {
+	nSamples := float64(len(prediction))
+	for i := range prediction {
+		diff := prediction[i] - truth[i]
+		diffSqPlus1 := diff*diff + 1
+		loss += math.Log(diffSqPlus1)
+		deravitive[i] = 2 / diffSqPlus1 * diff / nSamples
+	}
+	loss /= nSamples
+	return loss
+}
