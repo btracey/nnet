@@ -32,7 +32,7 @@ func DoParAndSeqMatch(inputs, truths [][]float64, net *Net, chunkSize int) bool 
 	floats.Scale(float64(1/len(inputs)), dLossDParamParFlat)
 	floats.Scale(float64(1/len(inputs)), dLossDParamSeqFlat)
 
-	return floats.Eq(dLossDParamParFlat, dLossDParamSeqFlat, 1e-14)
+	return floats.EqualApprox(dLossDParamParFlat, dLossDParamSeqFlat, 1e-14)
 }
 
 func TestParLossDeriv(t *testing.T) {

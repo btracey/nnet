@@ -63,7 +63,7 @@ func neuronTest(t *testing.T, neuron Neuron, answers neuronTestAnswers, inputs, 
 		parameters[i] += neuronTestFDStep
 		fdDCombinationDParameters[i] = (comb1 - comb2) / (2 * neuronTestFDStep)
 	}
-	if !floats.Eq(predDCombinationDParameters, fdDCombinationDParameters, neuronTestFDTol) {
+	if !floats.EqualApprox(predDCombinationDParameters, fdDCombinationDParameters, neuronTestFDTol) {
 		t.Errorf("DCombinationDParameters mismatch. %v found, %v expected", predDCombinationDParameters, fdDCombinationDParameters)
 		return
 	}
@@ -82,7 +82,7 @@ func neuronTest(t *testing.T, neuron Neuron, answers neuronTestAnswers, inputs, 
 		inputs[i] += neuronTestFDStep
 		fdDCombinationDInput[i] = (comb1 - comb2) / (2 * neuronTestFDStep)
 	}
-	if !floats.Eq(predDCombinationDInput, fdDCombinationDInput, neuronTestFDTol) {
+	if !floats.EqualApprox(predDCombinationDInput, fdDCombinationDInput, neuronTestFDTol) {
 		t.Errorf("DCombinationDInputs mismatch. %v found, %v expected", predDCombinationDInput, fdDCombinationDInput)
 		return
 	}

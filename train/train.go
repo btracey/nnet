@@ -32,8 +32,8 @@ func GetChunkSize(inputs int) int {
 }
 
 func SetScale(inputs, outputs [][]float64, net *nnet.Net) {
-	net.InputMean, net.InputStd = scale.FindScale(inputs)
-	net.OutputMean, net.OutputStd = scale.FindScale(outputs)
+	net.InputScaler.SetScale(inputs)
+	net.OutputScaler.SetScale(outputs)
 }
 
 // OneFoldTrain trains the net by splitting the data into a training and a testing
@@ -130,10 +130,10 @@ func (o *OneFoldTrain) Init() error {
 
 	fmt.Println("One fold train initialize")
 	SetScale(o.trainInputs, o.trainOutputs, o.net)
-	scale.ScaleData(o.trainInputs, o.net.InputMean, o.net.InputStd)
-	scale.ScaleData(o.trainOutputs, o.net.OutputMean, o.net.OutputStd)
-	scale.ScaleData(o.testInputs, o.net.InputMean, o.net.InputStd)
-	scale.ScaleData(o.testOutputs, o.net.OutputMean, o.net.OutputStd)
+	scale.ScaleData(o.net.InputScaler, o.trainInputs)
+	scale.ScaleData(o.net.OutputScaler, o.trainOutputs)
+	scale.ScaleData(o.net.InputScaler, o.testInputs)
+	scale.ScaleData(o.net.OutputScaler, o.testOutputs)
 	fmt.Println("Done scale")
 
 	/*
@@ -158,10 +158,10 @@ func (o *OneFoldTrain) Init() error {
 }
 
 func (o *OneFoldTrain) Result() {
-	scale.UnscaleData(o.trainInputs, o.net.InputMean, o.net.InputStd)
-	scale.UnscaleData(o.testInputs, o.net.InputMean, o.net.InputStd)
-	scale.UnscaleData(o.trainOutputs, o.net.OutputMean, o.net.OutputStd)
-	scale.UnscaleData(o.testOutputs, o.net.OutputMean, o.net.OutputStd)
+	scale.UnscaleData(o.net.InputScaler, o.trainInputs)
+	scale.UnscaleData(o.net.InputScaler, o.testInputs)
+	scale.UnscaleData(o.net.OutputScaler, o.trainOutputs)
+	scale.UnscaleData(o.net.OutputScaler, o.testOutputs)
 }
 
 func (o *OneFoldTrain) Status() common.Status {

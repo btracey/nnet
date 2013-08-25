@@ -2,6 +2,7 @@ package nnet
 
 import (
 	"github.com/btracey/nnet/loss"
+	"github.com/btracey/nnet/scale"
 	"github.com/gonum/floats"
 	"testing"
 )
@@ -28,10 +29,17 @@ func TestProcessNeuron(t *testing.T) {
 
 func TestNetPredict(t *testing.T) {
 	net := DefaultRegression(3, 2, 2, 4)
-	net.InputMean = make([]float64, 3)
-	net.InputStd = []float64{1, 1, 1}
-	net.OutputMean = make([]float64, 2)
-	net.OutputStd = []float64{1, 1}
+
+	is := &scale.Normal{}
+	is.Mu = make([]float64, 3)
+	is.Sigma = []float64{1, 1, 1}
+	is.Scaled = true
+	net.InputScaler = is
+	os := &scale.Normal{}
+	os.Mu = make([]float64, 2)
+	os.Sigma = []float64{1, 1}
+	os.Scaled = true
+	net.OutputScaler = os
 	input := []float64{1, 2, 3}
 	net.RandomizeParameters()
 
@@ -47,7 +55,7 @@ func TestNetPredict(t *testing.T) {
 
 	Predict(input, net, predOutput2, predictTmpMemory.combinations, predictTmpMemory.outputs)
 
-	if !floats.Eq(predOutput1, predOutput2, 1e-15) {
+	if !floats.EqualApprox(predOutput1, predOutput2, 1e-15) {
 		t.Errorf("net.Predict and Predict don't match")
 	}
 }
@@ -85,7 +93,7 @@ func TestPredLossDeriv(t *testing.T) {
 		params[i] += netFDStep
 		FDdLossFlat[i] = (loss1 - loss2) / (2 * netFDStep)
 	}
-	if !floats.Eq(dLossFlat, FDdLossFlat, netFDTol) {
+	if !floats.EqualApprox(dLossFlat, FDdLossFlat, netFDTol) {
 		t.Errorf("Finite difference doesn't match derivative")
 	}
 }

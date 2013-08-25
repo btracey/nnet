@@ -5,7 +5,7 @@ import (
 	"github.com/gonum/floats"
 	"math"
 
-	"fmt"
+	//"fmt"
 )
 
 // IdenticalDimensions is an error type expressing that
@@ -30,14 +30,10 @@ func (u UnequalLength) Error() string {
 // some of the data have unequal lengths or if less than two data points are
 // entered
 type Scaler interface {
-	Scale(point []float64) error   // Scales (in place) the data point
-	Unscale(point []float64) error // Unscales (in place) the data point
-	IsScaled() bool                // Returns true if the scale for this type has already been set
-	Dimensions() int               //Number of dimensions for wihich the data was scaled
-}
-
-type SettableScaler interface {
-	Scaler
+	Scale(point []float64) error     // Scales (in place) the data point
+	Unscale(point []float64) error   // Unscales (in place) the data point
+	IsScaled() bool                  // Returns true if the scale for this type has already been set
+	Dimensions() int                 //Number of dimensions for wihich the data was scaled
 	SetScale(data [][]float64) error // Uses the input data to set the scale
 }
 
@@ -78,6 +74,38 @@ func checkInputs(data [][]float64) error {
 	if len(data) < 2 {
 		return errors.New("LessThanTwoInputs")
 	}
+	return nil
+}
+
+// None is a type specifying no transformation of the input should be done
+type None struct {
+	Dim    int // Dimensions
+	Scaled bool
+}
+
+func (n None) IsScaled() bool {
+	return n.Scaled
+}
+
+func (n None) Scale(x []float64) error {
+	return nil
+}
+
+func (n None) Unscale(x []float64) error {
+	return nil
+}
+
+func (n None) Dimensions() int {
+	return n.Dim
+}
+
+func (n *None) SetScale(data [][]float64) error {
+	err := checkInputs(data)
+	if err != nil {
+		return err
+	}
+	n.Dim = len(data[0])
+	n.Scaled = true
 	return nil
 }
 
@@ -156,8 +184,10 @@ func (l *Linear) SetScale(data [][]float64) error {
 			l.Max[i] += 0.5
 		}
 	}
-	fmt.Println("In program, is nil?", unifError == nil)
-	return unifError
+	if unifError != nil {
+		return unifError
+	}
+	return nil
 }
 
 // Scales the point returning an error if the length doesn't match
@@ -227,7 +257,7 @@ func (n *Normal) SetScale(data [][]float64) error {
 	std := make([]float64, dim)
 	for _, samp := range data {
 		for i, val := range samp {
-			diff := (val - mean[i])
+			diff := val - mean[i]
 			std[i] += diff * diff
 		}
 	}
@@ -251,7 +281,10 @@ func (n *Normal) SetScale(data [][]float64) error {
 
 	n.Mu = mean
 	n.Sigma = std
-	return unifError
+	if unifError != nil {
+		return unifError
+	}
+	return nil
 }
 
 // Scale scales the data point
@@ -276,7 +309,7 @@ func (n *Normal) Unscale(point []float64) error {
 	return nil
 }
 
-type ProbDist interface {
+type ProbabilityDistribution interface {
 	Fit([]float64)
 	CumProb(float64) float64
 	Quantile(float64) float64
@@ -286,8 +319,8 @@ type ProbDist interface {
 // Probability scales the inputs based on the supplied
 // probability distributions
 type Probability struct {
-	UnscaledDistribution []ProbDist // Probabilitiy distribution from which the data come
-	ScaledDistribution   []ProbDist // Probability distribution to which the data should be scaled
+	UnscaledDistribution []ProbabilityDistribution // Probabilitiy distribution from which the data come
+	ScaledDistribution   []ProbabilityDistribution // Probability distribution to which the data should be scaled
 	Dim                  int
 	Scaled               bool
 }

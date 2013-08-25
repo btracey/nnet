@@ -12,7 +12,9 @@ import (
 // Parameters and ParametersVector are accessible for training purposes,
 // but they should not be resliced or appended to. The memories are linked
 type Net struct {
-	Losser loss.Losser // The loss function for training (nneded for computing the derivative)
+	Losser       loss.Losser  // The loss function for training (nneded for computing the derivative)
+	InputScaler  scale.Scaler // The way in which the data should be scaled (and unscaled)
+	OutputScaler scale.Scaler // The way in which the data should be scaled (and unscaled)
 	//NeuronActivator activator.Activator
 	//FinalActivator  activator.Activator
 
@@ -24,11 +26,6 @@ type Net struct {
 	totalNumParameters int
 	nParameters        [][]int // Number of parameters per neuron
 	parameterIdx       [][]int // The starting index of the weights of the neuron
-
-	InputMean  []float64 // Scale set by training
-	InputStd   []float64 // Scale set by training
-	OutputMean []float64 // Scale set by training
-	OutputStd  []float64 // Scale set by training
 }
 
 // NewNet creates a new net
@@ -175,11 +172,18 @@ func (net *Net) Predict(input []float64) (pred []float64, err error) {
 	predOutput := make([]float64, net.nOutputs)
 	predictTmpMemory := net.NewPredictTmpMemory()
 
-	scale.ScalePoint(input, net.InputMean, net.InputStd)
-	defer scale.UnscalePoint(input, net.InputMean, net.InputStd)
+	if !net.InputScaler.IsScaled() {
+		return nil, errors.New("Scale must be set before calling predict")
+	}
+	if !net.OutputScaler.IsScaled() {
+		return nil, errors.New("Scale must be set before calling predict")
+	}
+
+	net.InputScaler.Scale(input)
+	defer net.InputScaler.Unscale(input)
 
 	Predict(input, net, predOutput, predictTmpMemory.combinations, predictTmpMemory.outputs)
-	scale.UnscalePoint(predOutput, net.OutputMean, net.OutputStd)
+	net.OutputScaler.Unscale(predOutput)
 	return predOutput, nil
 }
 
@@ -263,8 +267,11 @@ func DefaultRegression(nInputs, nOutputs, nHiddenLayers, nNeuronsPerHiddenLayer 
 	for j := range layers[len(layers)-1].Neurons {
 		layers[len(layers)-1].Neurons[j] = &LinearNeuron
 	}
-
-	return NewNet(nInputs, layers)
+	net := NewNet(nInputs, layers)
+	net.Losser = loss.SquaredDistance{}
+	net.InputScaler = &scale.Normal{}
+	net.OutputScaler = &scale.Normal{}
+	return net
 }
 
 // layer represents a layer of neurons
