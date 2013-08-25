@@ -42,10 +42,10 @@ type OneFoldTrain struct {
 	LossRatio float64
 
 	net          *nnet.Net
-	trainInputs  [][]float64
-	trainOutputs [][]float64
-	testInputs   [][]float64
-	testOutputs  [][]float64
+	TrainInputs  [][]float64
+	TrainOutputs [][]float64
+	TestInputs   [][]float64
+	TestOutputs  [][]float64
 	chunkSize    int
 
 	dLossDParamTrain     [][][]float64
@@ -84,56 +84,56 @@ func NewOneFoldTrain(net *nnet.Net, losser loss.Losser, inputs, outputs [][]floa
 	nTest := int(float64(nSamples) / 2)
 	nTrain := nSamples - nTest
 	rp := rand.Perm(nSamples)
-	o.testInputs = make([][]float64, nTest)
-	o.testOutputs = make([][]float64, nTest)
-	o.trainInputs = make([][]float64, nTrain)
-	o.trainOutputs = make([][]float64, nTrain)
+	o.TestInputs = make([][]float64, nTest)
+	o.TestOutputs = make([][]float64, nTest)
+	o.TrainInputs = make([][]float64, nTrain)
+	o.TrainOutputs = make([][]float64, nTrain)
 
 	o.dLossDParamTrain, o.dLossDParamTrainFlat = net.NewPerParameterMemory()
 	o.dLossDParamTest, o.dLossDParamTestFlat = net.NewPerParameterMemory()
 
 	var n int
 	// Copy the test inputs over
-	for i := range o.testInputs {
-		o.testInputs[i] = make([]float64, nInputs)
-		n = copy(o.testInputs[i], inputs[rp[i]])
+	for i := range o.TestInputs {
+		o.TestInputs[i] = make([]float64, nInputs)
+		n = copy(o.TestInputs[i], inputs[rp[i]])
 		if n != nInputs {
 			panic("all inputs must have the same length")
 		}
-		o.testOutputs[i] = make([]float64, nOutputs)
-		n = copy(o.testOutputs[i], outputs[rp[i]])
+		o.TestOutputs[i] = make([]float64, nOutputs)
+		n = copy(o.TestOutputs[i], outputs[rp[i]])
 		if n != nOutputs {
 			panic("all outputs must have the same length")
 		}
 	}
 	// Copy the train inputs over
-	for i := range o.trainInputs {
-		o.trainInputs[i] = make([]float64, nInputs)
-		n = copy(o.trainInputs[i], inputs[rp[nTest+i]])
+	for i := range o.TrainInputs {
+		o.TrainInputs[i] = make([]float64, nInputs)
+		n = copy(o.TrainInputs[i], inputs[rp[nTest+i]])
 		if n != nInputs {
 			panic("all inputs must have the same length")
 		}
-		o.trainOutputs[i] = make([]float64, nOutputs)
-		n = copy(o.trainOutputs[i], outputs[rp[nTest+i]])
+		o.TrainOutputs[i] = make([]float64, nOutputs)
+		n = copy(o.TrainOutputs[i], outputs[rp[nTest+i]])
 		if n != nOutputs {
 			panic("all outputs must have the same length")
 		}
 	}
 
 	//fmt.Println("inputs", inputs)
-	//fmt.Println("trainInputs", o.trainInputs)
-	//fmt.Println("testInputs", o.testInputs)
+	//fmt.Println("TrainInputs", o.TrainInputs)
+	//fmt.Println("TestInputs", o.TestInputs)
 	return o
 }
 
 func (o *OneFoldTrain) Init() error {
 
 	fmt.Println("One fold train initialize")
-	SetScale(o.trainInputs, o.trainOutputs, o.net)
-	scale.ScaleData(o.net.InputScaler, o.trainInputs)
-	scale.ScaleData(o.net.OutputScaler, o.trainOutputs)
-	scale.ScaleData(o.net.InputScaler, o.testInputs)
-	scale.ScaleData(o.net.OutputScaler, o.testOutputs)
+	SetScale(o.TrainInputs, o.TrainOutputs, o.net)
+	scale.ScaleData(o.net.InputScaler, o.TrainInputs)
+	scale.ScaleData(o.net.OutputScaler, o.TrainOutputs)
+	scale.ScaleData(o.net.InputScaler, o.TestInputs)
+	scale.ScaleData(o.net.OutputScaler, o.TestOutputs)
 	fmt.Println("Done scale")
 
 	/*
@@ -144,11 +144,11 @@ func (o *OneFoldTrain) Init() error {
 	*/
 
 	/*
-		for i := range o.trainInputs {
-			fmt.Println(o.trainInputs[i])
+		for i := range o.TrainInputs {
+			fmt.Println(o.TrainInputs[i])
 		}
-		for i := range o.trainOutputs {
-			fmt.Println(o.trainOutputs[i])
+		for i := range o.TrainOutputs {
+			fmt.Println(o.TrainOutputs[i])
 		}
 	*/
 	if o.net.Losser == nil {
@@ -158,10 +158,10 @@ func (o *OneFoldTrain) Init() error {
 }
 
 func (o *OneFoldTrain) Result() {
-	scale.UnscaleData(o.net.InputScaler, o.trainInputs)
-	scale.UnscaleData(o.net.InputScaler, o.testInputs)
-	scale.UnscaleData(o.net.OutputScaler, o.trainOutputs)
-	scale.UnscaleData(o.net.OutputScaler, o.testOutputs)
+	scale.UnscaleData(o.net.InputScaler, o.TrainInputs)
+	scale.UnscaleData(o.net.InputScaler, o.TestInputs)
+	scale.UnscaleData(o.net.OutputScaler, o.TrainOutputs)
+	scale.UnscaleData(o.net.OutputScaler, o.TestOutputs)
 }
 
 func (o *OneFoldTrain) Status() common.Status {
@@ -178,27 +178,27 @@ func (o *OneFoldTrain) ObjGrad(weights []float64) (loss float64, deriv []float64
 	trainLossChan := make(chan float64)
 	testLossChan := make(chan float64)
 	go func() {
-		trainLossChan <- nnet.ParLossDeriv(o.trainInputs, o.trainOutputs, o.net, o.dLossDParamTrain, o.chunkSize)
+		trainLossChan <- nnet.ParLossDeriv(o.TrainInputs, o.TrainOutputs, o.net, o.dLossDParamTrain, o.chunkSize)
 	}()
 	go func() {
-		testLossChan <- nnet.ParLossDeriv(o.testInputs, o.testOutputs, o.net, o.dLossDParamTest, o.chunkSize)
+		testLossChan <- nnet.ParLossDeriv(o.TestInputs, o.TestOutputs, o.net, o.dLossDParamTest, o.chunkSize)
 	}()
 
 	w := sync.WaitGroup{}
 	w.Add(2)
 	go func() {
 		o.trainLoss = <-trainLossChan
-		o.trainLoss /= float64(len(o.trainInputs))
+		o.trainLoss /= float64(len(o.TrainInputs))
 		//fmt.Println("Train 2 norm", floats.Norm(dLossDParamTrainFlat, 2))
-		floats.Scale(1/float64(len(o.trainInputs)), o.dLossDParamTrainFlat)
+		floats.Scale(1/float64(len(o.TrainInputs)), o.dLossDParamTrainFlat)
 		//fmt.Println("Train 2 norm", floats.Norm(dLossDParamTrainFlat, 2))
 		w.Done()
 	}()
 	go func() {
 		o.testLoss = <-testLossChan
-		o.testLoss /= float64(len(o.testInputs))
+		o.testLoss /= float64(len(o.TestInputs))
 
-		floats.Scale(1/float64(len(o.testInputs)), o.dLossDParamTestFlat)
+		floats.Scale(1/float64(len(o.TestInputs)), o.dLossDParamTestFlat)
 		w.Done()
 	}()
 	w.Wait()
@@ -210,8 +210,8 @@ func (o *OneFoldTrain) ObjGrad(weights []float64) (loss float64, deriv []float64
 
 	//fmt.Println("Done waiting")
 	//fmt.Println("trainLoss", o.trainLoss)
-	//fmt.Println("nTrain", float64(len(o.trainInputs)))
-	//fmt.Println("nTest", float64(len(o.testInputs)))
+	//fmt.Println("nTrain", float64(len(o.TrainInputs)))
+	//fmt.Println("nTest", float64(len(o.TestInputs)))
 	return o.trainLoss, o.dLossDParamTrainFlat, nil
 }
 

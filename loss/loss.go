@@ -84,3 +84,21 @@ func (l LogSquared) LossAndDeriv(prediction, truth, deravitive []float64) (loss 
 	loss /= nSamples
 	return loss
 }
+
+/*
+// Information treats the predictions as coming from the
+// normal distribution. Assumes that the distribution
+// is unimodal
+type NormalInformation struct{}
+
+func (n NormalInformation) LossAndDeriv(prediction, truth, derivative []float64) {
+	nDim := float64(len(prediction))
+	for i := range prediction{
+		// If both prediction and the truth are on the same side of the mode,
+		// just find the difference in their log probability
+		if (prediction < 0 && truth < 0 ) || (truth > 0 && prediction > 0){
+
+		}
+	}
+}
+*/
