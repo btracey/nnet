@@ -310,7 +310,7 @@ func (n *Normal) Unscale(point []float64) error {
 }
 
 type ProbabilityDistribution interface {
-	Fit([]float64)
+	Fit([]float64) error
 	CumProb(float64) float64
 	Quantile(float64) float64
 	Prob(float64) float64
@@ -364,14 +364,23 @@ func (p *Probability) Scale(point []float64) error {
 	if len(point) != p.Dim {
 		return UnequalLength{}
 	}
-
 	for i := range point {
 		// Check that the point doesn't have zero probability
 		if p.UnscaledDistribution[i].Prob(point[i]) == 0 {
 			return errors.New("Zero probability point")
 		}
+		//fmt.Println("point", point[i])
 		prob := p.UnscaledDistribution[i].CumProb(point[i])
+		//fmt.Println("point i", point[i], "prob", prob)
+		//fmt.Println("prob", prob)
 		point[i] = p.ScaledDistribution[i].Quantile(prob)
+		//fmt.Println("newpoint", point[i])
+		if math.IsInf(point[i], 0) {
+			panic("inf point")
+		}
+		if math.IsNaN(point[i]) {
+			panic("NaN point")
+		}
 	}
 	return nil
 }

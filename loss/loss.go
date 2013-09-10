@@ -52,14 +52,13 @@ func (m ManhattanDistance) LossAndDeriv(prediction, truth, derivative []float64)
 	return loss
 }
 
-type RelativeSquared struct {
-	Epsilon float64
-}
+// Relative squared is the relative error with the value of RelativeSquared added in the denominator
+type RelativeSquared float64
 
-func (r *RelativeSquared) LossAndDeriv(prediction, truth, derivative []float64) (loss float64) {
+func (r RelativeSquared) LossAndDeriv(prediction, truth, derivative []float64) (loss float64) {
 	nSamples := float64(len(prediction))
 	for i := range prediction {
-		denom := math.Abs(truth[i]) + r.Epsilon
+		denom := math.Abs(truth[i]) + float64(r)
 		diff := prediction[i] - truth[i]
 
 		diffOverDenom := diff / denom
@@ -71,6 +70,7 @@ func (r *RelativeSquared) LossAndDeriv(prediction, truth, derivative []float64) 
 	return loss
 }
 
+// LogSquared uses log(1 + diff*diff) so that really high losses aren't as important
 type LogSquared struct{}
 
 func (l LogSquared) LossAndDeriv(prediction, truth, deravitive []float64) (loss float64) {
