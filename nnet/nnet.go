@@ -188,6 +188,13 @@ func (net *Net) Predict(input []float64) (pred []float64, err error) {
 }
 
 func (net *Net) PredictSlice(inputs [][]float64) (predictions [][]float64, err error) {
+
+	if !net.InputScaler.IsScaled() {
+		return nil, errors.New("Scale must be set before calling predict")
+	}
+	if !net.OutputScaler.IsScaled() {
+		return nil, errors.New("Scale must be set before calling predict")
+	}
 	for _, input := range inputs {
 		if len(input) != net.nInputs {
 			return nil, errors.New("Lengths of all the inputs must match net.nInputs")
@@ -197,6 +204,12 @@ func (net *Net) PredictSlice(inputs [][]float64) (predictions [][]float64, err e
 	for i := range predictions {
 		predictions[i] = make([]float64, net.nOutputs)
 	}
+
+	err = scale.ScaleData(net.InputScaler, inputs)
+	if err != nil {
+		return nil, err
+	}
+	defer scale.UnscaleData(net.InputScaler, inputs)
 
 	w := sync.WaitGroup{}
 	// Predict samples in parallel
@@ -222,6 +235,7 @@ func (net *Net) PredictSlice(inputs [][]float64) (predictions [][]float64, err e
 		}
 		count += chunkSize
 	}
+	defer scale.UnscaleData(net.OutputScaler, predictions)
 	return predictions, nil
 }
 
