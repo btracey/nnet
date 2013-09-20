@@ -14,6 +14,8 @@ import (
 // GobEncode and GobDecode methods help to save the learning algorithm
 type Losser interface {
 	LossAndDeriv(prediction []float64, truth []float64, derivative []float64) float64
+	GobEncode() ([]byte, error)
+	GobDecode([]byte) error
 }
 
 // SquaredDistance is the same as the two-norm of (truth - pred) divided by the length
