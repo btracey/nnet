@@ -74,7 +74,7 @@ func TestRelativeSquared(t *testing.T) {
 	trueloss := ((.1/(1.1+tol))*(.1/(1.1+tol)) + (.2/(2.2+tol))*(.2/(2.2+tol)) + (.3/(2.7+tol))*(.3/(2.7+tol))) / 3
 	derivative := []float64{0, 0, 0}
 
-	sq := &RelativeSquared{tol}
+	sq := RelativeSquared(tol)
 	loss := sq.LossAndDeriv(prediction, truth, derivative)
 	if math.Abs(loss-trueloss) > TOL {
 		t.Errorf("Loss doesn't match. %v found, %v expected", loss, trueloss)
