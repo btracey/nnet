@@ -45,7 +45,7 @@ func TestSquaredDistance(t *testing.T) {
 		t.Errorf("Loss doesn't match")
 	}
 	derivative, fdDerivative := finiteDifferenceLosser(sq, prediction, truth)
-	if !floats.Eq(derivative, fdDerivative, FDTol) {
+	if !floats.EqualApprox(derivative, fdDerivative, FDTol) {
 		t.Errorf("Derivative doesn't match. deriv: %v, fdDeriv: %v ", derivative, fdDerivative)
 	}
 }
@@ -62,7 +62,7 @@ func TestManhattanDistance(t *testing.T) {
 		t.Errorf("Loss doesn't match. %v found, %v expected", loss, trueloss)
 	}
 	derivative, fdDerivative := finiteDifferenceLosser(sq, prediction, truth)
-	if !floats.Eq(derivative, fdDerivative, FDTol) {
+	if !floats.EqualApprox(derivative, fdDerivative, FDTol) {
 		t.Errorf("Derivative doesn't match. \n deriv: %v \n fdDeriv: %v ", derivative, fdDerivative)
 	}
 }
@@ -80,7 +80,7 @@ func TestRelativeSquared(t *testing.T) {
 		t.Errorf("Loss doesn't match. %v found, %v expected", loss, trueloss)
 	}
 	derivative, fdDerivative := finiteDifferenceLosser(sq, prediction, truth)
-	if !floats.Eq(derivative, fdDerivative, FDTol) {
+	if !floats.EqualApprox(derivative, fdDerivative, FDTol) {
 		t.Errorf("Derivative doesn't match. \n deriv: %v \n fdDeriv: %v ", derivative, fdDerivative)
 	}
 }
@@ -97,7 +97,7 @@ func TestLogSquared(t *testing.T) {
 		t.Errorf("Loss doesn't match. %v found, %v expected", loss, trueloss)
 	}
 	derivative, fdDerivative := finiteDifferenceLosser(sq, prediction, truth)
-	if !floats.Eq(derivative, fdDerivative, FDTol) {
+	if !floats.EqualApprox(derivative, fdDerivative, FDTol) {
 		t.Errorf("Derivative doesn't match. \n deriv: %v \n fdDeriv: %v ", derivative, fdDerivative)
 	}
 }
