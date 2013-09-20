@@ -10,12 +10,22 @@ import (
 // 3] a receiver for the derivative of the loss function with respect to the prediction
 // It returns the value of the loss function itself.
 // A loss function in general is a definition of how "bad" a certain prediction is.
+//
+// GobEncode and GobDecode methods help to save the learning algorithm
 type Losser interface {
 	LossAndDeriv(prediction []float64, truth []float64, derivative []float64) float64
 }
 
 // SquaredDistance is the same as the two-norm of (truth - pred) divided by the length
 type SquaredDistance struct{}
+
+func (s SquaredDistance) GobEncode() ([]byte, error) {
+	return []byte{}, nil
+}
+
+func (s SquaredDistance) GobDecode([]byte) error {
+	return nil
+}
 
 // LossAndDeriv computes the average square of the two-norm of (prediction - truth)
 // and stores the derivative of the two norm with respect to the prediction in derivative
@@ -34,6 +44,14 @@ func (l SquaredDistance) LossAndDeriv(prediction, truth, derivative []float64) (
 
 // Manhattan distance is the same as the one-norm of (truth - pred)
 type ManhattanDistance struct{}
+
+func (m ManhattanDistance) GobEncode() ([]byte, error) {
+	return []byte{}, nil
+}
+
+func (m ManhattanDistance) GobDecode([]byte) error {
+	return nil
+}
 
 // LossAndDeriv computes the one-norm of (prediction - truth) and stores the derivative of the one norm
 // with respect to the prediction in derivative
@@ -72,6 +90,14 @@ func (r RelativeSquared) LossAndDeriv(prediction, truth, derivative []float64) (
 
 // LogSquared uses log(1 + diff*diff) so that really high losses aren't as important
 type LogSquared struct{}
+
+func (l LogSquared) GobEncode() ([]byte, error) {
+	return []byte{}, nil
+}
+
+func (l LogSquared) GobDecode([]byte) error {
+	return nil
+}
 
 func (l LogSquared) LossAndDeriv(prediction, truth, deravitive []float64) (loss float64) {
 	nSamples := float64(len(prediction))

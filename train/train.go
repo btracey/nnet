@@ -62,6 +62,7 @@ type OneFoldTrain struct {
 	nCalls      int
 }
 
+// NewOneFoldTrain does not copy data
 func NewOneFoldTrain(net *nnet.Net, losser loss.Losser, inputs, outputs [][]float64) *OneFoldTrain {
 
 	if len(inputs) != len(outputs) {
@@ -79,8 +80,6 @@ func NewOneFoldTrain(net *nnet.Net, losser loss.Losser, inputs, outputs [][]floa
 
 	// Divide the inputs and outputs in half
 	nSamples := len(inputs)
-	nInputs := len(inputs[0])
-	nOutputs := len(outputs[0])
 	nTest := int(float64(nSamples) / 2)
 	nTrain := nSamples - nTest
 	rp := rand.Perm(nSamples)
@@ -92,33 +91,45 @@ func NewOneFoldTrain(net *nnet.Net, losser loss.Losser, inputs, outputs [][]floa
 	o.dLossDParamTrain, o.dLossDParamTrainFlat = net.NewPerParameterMemory()
 	o.dLossDParamTest, o.dLossDParamTestFlat = net.NewPerParameterMemory()
 
-	var n int
-	// Copy the test inputs over
 	for i := range o.TestInputs {
-		o.TestInputs[i] = make([]float64, nInputs)
-		n = copy(o.TestInputs[i], inputs[rp[i]])
-		if n != nInputs {
-			panic("all inputs must have the same length")
-		}
-		o.TestOutputs[i] = make([]float64, nOutputs)
-		n = copy(o.TestOutputs[i], outputs[rp[i]])
-		if n != nOutputs {
-			panic("all outputs must have the same length")
-		}
+		o.TestInputs[i] = inputs[rp[i]]
+		o.TestOutputs[i] = outputs[rp[i]]
 	}
-	// Copy the train inputs over
+
 	for i := range o.TrainInputs {
-		o.TrainInputs[i] = make([]float64, nInputs)
-		n = copy(o.TrainInputs[i], inputs[rp[nTest+i]])
-		if n != nInputs {
-			panic("all inputs must have the same length")
-		}
-		o.TrainOutputs[i] = make([]float64, nOutputs)
-		n = copy(o.TrainOutputs[i], outputs[rp[nTest+i]])
-		if n != nOutputs {
-			panic("all outputs must have the same length")
-		}
+		o.TrainInputs[i] = inputs[rp[nTest+i]]
+		o.TrainOutputs[i] = outputs[rp[nTest+i]]
 	}
+
+	/*
+		var n int
+		// Copy the test data over
+		for i := range o.TestInputs {
+			o.TestInputs[i] = make([]float64, nInputs)
+			n = copy(o.TestInputs[i], inputs[rp[i]])
+			if n != nInputs {
+				panic("all inputs must have the same length")
+			}
+			o.TestOutputs[i] = make([]float64, nOutputs)
+			n = copy(o.TestOutputs[i], outputs[rp[i]])
+			if n != nOutputs {
+				panic("all outputs must have the same length")
+			}
+		}
+		// Copy the train data over
+		for i := range o.TrainInputs {
+			o.TrainInputs[i] = make([]float64, nInputs)
+			n = copy(o.TrainInputs[i], inputs[rp[nTest+i]])
+			if n != nInputs {
+				panic("all inputs must have the same length")
+			}
+			o.TrainOutputs[i] = make([]float64, nOutputs)
+			n = copy(o.TrainOutputs[i], outputs[rp[nTest+i]])
+			if n != nOutputs {
+				panic("all outputs must have the same length")
+			}
+		}
+	*/
 
 	//fmt.Println("inputs", inputs)
 	//fmt.Println("TrainInputs", o.TrainInputs)
@@ -130,6 +141,8 @@ func (o *OneFoldTrain) Init() error {
 
 	fmt.Println("One fold train initialize")
 	SetScale(o.TrainInputs, o.TrainOutputs, o.net)
+	fmt.Println("input scaler:", o.net.InputScaler)
+	fmt.Println("output scaler:", o.net.InputScaler)
 	scale.ScaleData(o.net.InputScaler, o.TrainInputs)
 	scale.ScaleData(o.net.OutputScaler, o.TrainOutputs)
 	scale.ScaleData(o.net.InputScaler, o.TestInputs)

@@ -12,7 +12,7 @@ import (
 // Parameters and ParametersVector are accessible for training purposes,
 // but they should not be resliced or appended to. The memories are linked
 type Net struct {
-	Losser       loss.Losser  // The loss function for training (nneded for computing the derivative)
+	Losser       loss.Losser  // The loss function for training (needed for computing the derivative)
 	InputScaler  scale.Scaler // The way in which the data should be scaled (and unscaled)
 	OutputScaler scale.Scaler // The way in which the data should be scaled (and unscaled)
 	//NeuronActivator activator.Activator
@@ -207,7 +207,7 @@ func (net *Net) PredictSlice(inputs [][]float64) (predictions [][]float64, err e
 
 	err = scale.ScaleData(net.InputScaler, inputs)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("Error using ScaleData: " + err.Error())
 	}
 	defer scale.UnscaleData(net.InputScaler, inputs)
 
@@ -235,6 +235,7 @@ func (net *Net) PredictSlice(inputs [][]float64) (predictions [][]float64, err e
 		}
 		count += chunkSize
 	}
+	w.Wait()
 	defer scale.UnscaleData(net.OutputScaler, predictions)
 	return predictions, nil
 }

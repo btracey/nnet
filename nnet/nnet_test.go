@@ -5,12 +5,27 @@ import (
 	"github.com/btracey/nnet/scale"
 	"github.com/gonum/floats"
 	"testing"
+
+	"math/rand"
+
+	"fmt"
 )
 
 const (
 	netFDStep = 1e-6
 	netFDTol  = 1e-8
 )
+
+func RandomData(size int, numberOfSamples int) [][]float64 {
+	data := make([][]float64, numberOfSamples)
+	for i := range data {
+		data[i] = make([]float64, size)
+		for j := range data[i] {
+			data[i][j] = rand.Float64()
+		}
+	}
+	return data
+}
 
 func TestProcessNeuron(t *testing.T) {
 	neuron := &TanhNeuron
@@ -27,18 +42,20 @@ func TestProcessNeuron(t *testing.T) {
 	}
 }
 
-func TestNetPredict(t *testing.T) {
+func TestNetPredictMatchPredict(t *testing.T) {
 	net := DefaultRegression(3, 2, 2, 4)
 
 	is := &scale.Normal{}
 	is.Mu = make([]float64, 3)
 	is.Sigma = []float64{1, 1, 1}
 	is.Scaled = true
+	is.Dim = 3
 	net.InputScaler = is
 	os := &scale.Normal{}
 	os.Mu = make([]float64, 2)
 	os.Sigma = []float64{1, 1}
 	os.Scaled = true
+	is.Dim = 2
 	net.OutputScaler = os
 	input := []float64{1, 2, 3}
 	net.RandomizeParameters()
@@ -58,6 +75,66 @@ func TestNetPredict(t *testing.T) {
 	if !floats.EqualApprox(predOutput1, predOutput2, 1e-15) {
 		t.Errorf("net.Predict and Predict don't match")
 	}
+}
+
+func TestPredictSliceMatchPredict(t *testing.T) {
+	nInputs := 3
+	net := DefaultRegression(nInputs, 2, 2, 4)
+	is := &scale.Normal{}
+	is.Mu = make([]float64, 3)
+	is.Sigma = []float64{1, 1, 1}
+	is.Scaled = true
+	is.Dim = 3
+	net.InputScaler = is
+	os := &scale.Normal{}
+	os.Mu = make([]float64, 2)
+	os.Sigma = []float64{1, 1}
+	os.Scaled = true
+	os.Dim = 2
+	net.OutputScaler = os
+	//input := []float64{1, 2, 3}
+	net.RandomizeParameters()
+
+	nSamples := 10
+	data := RandomData(nInputs, nSamples)
+	data1 := make([]float64, nInputs)
+	for i := range data[0] {
+		data1[i] = data[0][i]
+	}
+
+	var err error
+	predictions1 := make([][]float64, nSamples)
+	for i := range data {
+		predictions1[i], err = net.Predict(data[i])
+		if err != nil {
+			t.Errorf("Error using net.Predict: %v", err)
+			return
+		}
+	}
+	// Check that data matches
+	if !floats.EqualApprox(data[0], data1, 1e-15) {
+		t.Errorf("Data doesn't match after predict")
+		return
+	}
+
+	predictions2, err := net.PredictSlice(data)
+	if err != nil {
+		t.Errorf("Error predicting in PredictSlice: %v", err)
+		return
+	}
+	if !floats.EqualApprox(data[0], data1, 1e-15) {
+		t.Errorf("Data doesn't match after PredictSlice")
+		return
+	}
+
+	for i := range predictions1 {
+		if !floats.EqualApprox(predictions1[i], predictions2[i], 1e-14) {
+			t.Errorf("Prediction %v doesn't match", i)
+			fmt.Println(predictions1, "\n", predictions2)
+			return
+		}
+	}
+
 }
 
 // Test to make sure that the predictions and derivatives match

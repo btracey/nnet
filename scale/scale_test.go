@@ -1,13 +1,39 @@
 package scale
 
 import (
-	"github.com/btracey/dist"
+	//"github.com/btracey/dist"
+	"bytes"
+	"encoding/gob"
 	"github.com/gonum/floats"
 	"math"
 	"testing"
 
-	//"fmt"
+	"fmt"
+	"reflect"
 )
+
+func testGob(s Scaler, sdecode Scaler, t *testing.T) {
+	w := new(bytes.Buffer)
+	encoder := gob.NewEncoder(w)
+	fmt.Println("starting encoding")
+	err := encoder.Encode(s)
+	fmt.Println("done encoding")
+	if err != nil {
+		t.Error(err)
+	}
+
+	b := w.Bytes()
+	r := bytes.NewBuffer(b)
+	decoder := gob.NewDecoder(r)
+	err = decoder.Decode(sdecode)
+	if err != nil {
+		t.Error(err)
+	}
+	isequal := reflect.DeepEqual(s, sdecode)
+	if !isequal {
+		t.Errorf("reflect DeepEqual doesn't match")
+	}
+}
 
 // TODO: Add in more tests for bad inputs
 
@@ -42,6 +68,7 @@ func testScaling(t *testing.T, u Scaler, data [][]float64, scaledData [][]float6
 
 func testLinear(t *testing.T, kind linearTest) {
 	u := &Linear{}
+	fmt.Println("In test linear")
 	err := u.SetScale(kind.data)
 
 	if err != nil {
@@ -56,6 +83,8 @@ func testLinear(t *testing.T, kind linearTest) {
 		t.Errorf("Max doesn't match for case " + kind.name)
 	}
 	testScaling(t, u, kind.data, kind.scaledData, kind.name)
+	u2 := &Linear{}
+	testGob(u, u2, t)
 }
 
 type linearTest struct {
@@ -152,6 +181,9 @@ func testNormal(t *testing.T, kind normalTest) {
 		t.Errorf("Sigma doesn't match for case "+kind.name+". Expected: %v, Found: %v", kind.sigma, u.Sigma)
 	}
 	testScaling(t, u, kind.data, kind.scaledData, kind.name)
+
+	u2 := &Normal{}
+	testGob(u, u2, t)
 }
 
 func TestNormal(t *testing.T) {
