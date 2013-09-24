@@ -16,16 +16,12 @@ func init() {
 	gob.Register(SumNeuron{Activator: activator.Tanh{}})
 }
 
-// netNeuron is the description of the neuron in its context of the full neural net.
-// contains a neuron, its ID number and the location of its weights
-// in the total weights vector.
-//type Neuron struct {
-//	Neuroner
-//id          int // ID of the neuron (index in the net neuron slice)
-//wID         int // ID of the start of the full weight vector
-//parameters  []float64
-//nParameters int
-//}
+var (
+	TanhNeuron       SumNeuron = SumNeuron{Activator: activator.Tanh{}}
+	LinearTanhNeuron SumNeuron = SumNeuron{Activator: activator.LinearTanh{}}
+	LinearNeuron     SumNeuron = SumNeuron{Activator: activator.Linear{}}
+	SigmoidNeuron    SumNeuron = SumNeuron{Activator: activator.Sigmoid{}}
+)
 
 // Neuron doesn't provide own memory, just a definition. Net interfaces with parameters directly
 type Neuron interface {
@@ -93,82 +89,3 @@ func (s *SumNeuron) DCombineDInput(params []float64, inputs []float64, combinati
 	}
 	// This intentionally doesn't loop over all of the parameters, as the last parameter is the bias term
 }
-
-var (
-	TanhNeuron       SumNeuron = SumNeuron{Activator: activator.Tanh{}}
-	LinearTanhNeuron SumNeuron = SumNeuron{Activator: activator.LinearTanh{}}
-	LinearNeuron     SumNeuron = SumNeuron{Activator: activator.Linear{}}
-	SigmoidNeuron    SumNeuron = SumNeuron{Activator: activator.Sigmoid{}}
-)
-
-//var TanhNeuron SumNeuron = SumNeuron{Activator: activator.Tanh}
-
-/*
-// Neuron is the basic element of the neural net. They take
-// in a set of inputs, compute a weighted sum of those inputs
-// (using Neuron.Weights), and then computes a function of the
-// weighted sum as defined by the activation function
-// The final weight is a bias term which is added at the end, so there
-// should be one more weight than the number of inputs
-type neuron struct {
-	weights  []float64
-	nWeights int
-	activator.Activator
-	InputTransform
-}
-
-// newNeuron reates a new neuron with the given number of inputs and
-// activator function
-func newNeuron(nInputs int, a activator.Activator) {
-	return &neuron{
-		nWeights:  nInputs + 1,
-		weights:   make([]float64, nInputs+1),
-		Activator: a,
-	}
-}
-
-// Process computes the weighted sum of inputs and the activation function
-func (n *neuron) process(input []float64) (sum, output float64) {
-	for i, val := range input {
-		sum += val * n.Weights[i]
-	}
-	sum += n.Weights[n.nWeights-1] //Bias term
-	return sum, n.Activate(sum)
-}
-
-// randomizeWeights sets the weights of the neuron to a random value
-// Uses the randomize proceedure as described in http://leon.bottou.org/slides/tricks/tricks.pdf
-func (n *neuron) randomizeWeights() {
-	// This specifc equation was chosen to have an expected sum
-	// to be between -1 and 1. Assuming the activation function also scales in this
-	// range that should be good
-	for i := range n.Weights {
-		n.Weights[i] = rand.NormFloat64() * math.Pow(float64(n.nWeights), -0.5)
-
-	}
-}
-
-// May want GobEncode in the future, still deciding on how we want
-// to save and load the net
-
-/*
-func (n *Neuron) GobEncode() (buf []byte, err error) {
-	w := bytes.NewBuffer(buf)
-	encoder := gob.NewEncoder(w)
-	err = encoder.Encode(n.Weights)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), err
-}
-
-func (n *Neuron) GobDecode(buf []byte) (err error) {
-	r := bytes.NewBuffer(buf)
-	decoder := gob.NewDecoder(r)
-	err = decoder.Decode(&n.Weights)
-	if err != nil {
-		return err
-	}
-	return err
-}
-*/
