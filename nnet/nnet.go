@@ -434,7 +434,7 @@ func (l *Layer) GobDecode(buf []byte) error {
 		return fmt.Errorf("Error decoding nNeurons: ")
 	}
 	l.Neurons = make([]Neuron, nNeurons)
-	var islocal bool
+	//var islocal bool
 	for i := range l.Neurons {
 		err = decoder.Decode(&l.Neurons[i])
 		if err != nil {
