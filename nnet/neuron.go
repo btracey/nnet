@@ -50,28 +50,6 @@ type SumNeuron struct {
 	activator.Activator
 }
 
-/*
-func (s *SumNeuron) GobEncode() ([]byte, error) {
-	w := new(bytes.Buffer)
-	encoder := gob.NewEncoder(w)
-	err := encoder.Encode(&s.Activator)
-	if err != nil {
-		return nil, fmt.Errorf("Error encoding activator: %v", err)
-	}
-	return w.Bytes(), nil
-}
-
-func (s *SumNeuron) GobDecode(buf []byte) error {
-	r := bytes.NewBuffer(buf)
-	decoder := gob.NewDecoder(r)
-	err := decoder.Decode(&s.Activator)
-	if err != nil {
-		return fmt.Errorf("Error decoding activator: %v", s.Activator)
-	}
-	return nil
-}
-*/
-
 // Activate function comes from activator
 
 // NParameters returns the number of parameters
