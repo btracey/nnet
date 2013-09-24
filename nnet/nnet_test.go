@@ -9,7 +9,6 @@ import (
 	"math/rand"
 
 	"fmt"
-	"reflect"
 )
 
 const (
@@ -36,19 +35,26 @@ func TestGob(t *testing.T) {
 		t.Error(err)
 	}
 
-	fmt.Println("Done encoding")
+	predictionsNet1, err := net.PredictSlice(rInput)
+	if err != nil {
+		t.Error("Error predicting on net 1")
+	}
 
-	/*
-		net2 := DefaultRegression(nInputs, nOutputs, nLayers, nNeuronsPerLayer)
-		net2.InputScaler = &scale.Linear{}
-		net2.InputScaler.SetScale(rInput)
-		net2.OutputScaler = &scale.Normal{}
-	*/
 	net2 := &Net{}
-	fmt.Println("net2 input scaler type:", reflect.TypeOf(net2.InputScaler))
 	err = net2.GobDecode(bytes)
 	if err != nil {
 		t.Errorf("Error decoding net2: %v ", err)
+	}
+	predictionsNet2, err := net2.PredictSlice(rInput)
+	if err != nil {
+		t.Error("Error predicting on net 2")
+	}
+
+	for i := range predictionsNet1 {
+		if !floats.EqualApprox(predictionsNet1[i], predictionsNet2[i], 1e-14) {
+			t.Errorf("Predictions don't match")
+			return
+		}
 	}
 }
 

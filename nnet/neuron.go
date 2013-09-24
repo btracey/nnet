@@ -6,12 +6,10 @@ import (
 	"math"
 	"math/rand"
 
-	"fmt"
+	//"fmt"
 
-	"bytes"
+	//"bytes"
 	"encoding/gob"
-
-	"reflect"
 )
 
 func init() {
@@ -43,8 +41,8 @@ type Neuron interface {
 	DActivateDCombination(combination, output float64) (derivative float64)
 	DCombineDParameters(params []float64, inputs []float64, combination float64, deriv []float64)
 	DCombineDInput(params []float64, inputs []float64, combination float64, deriv []float64)
-	gob.GobDecoder
-	gob.GobEncoder
+	//gob.GobDecoder
+	//gob.GobEncoder
 }
 
 // A sum neuron takes a weighted sum of all the inputs and pipes them through an activator function
@@ -52,32 +50,27 @@ type SumNeuron struct {
 	activator.Activator
 }
 
+/*
 func (s *SumNeuron) GobEncode() ([]byte, error) {
-	fmt.Println("In sum neuron gob encode")
 	w := new(bytes.Buffer)
 	encoder := gob.NewEncoder(w)
-	var err error
-	fmt.Println("Beginning to encode activator")
-	err = encoder.Encode(s.Activator)
-	fmt.Println("Done encoding activator")
+	err := encoder.Encode(&s.Activator)
 	if err != nil {
-		return nil, fmt.Errorf("Error encoding activator: %v", s.Activator)
+		return nil, fmt.Errorf("Error encoding activator: %v", err)
 	}
-	fmt.Println("Encoded activator, type is:", reflect.TypeOf(s.Activator))
 	return w.Bytes(), nil
 }
 
 func (s *SumNeuron) GobDecode(buf []byte) error {
-	fmt.Println("In sum neuron gobdecode")
 	r := bytes.NewBuffer(buf)
 	decoder := gob.NewDecoder(r)
 	err := decoder.Decode(&s.Activator)
 	if err != nil {
 		return fmt.Errorf("Error decoding activator: %v", s.Activator)
 	}
-	fmt.Println("decoded neuron, activator type is:", reflect.TypeOf(s.Activator))
 	return nil
 }
+*/
 
 // Activate function comes from activator
 

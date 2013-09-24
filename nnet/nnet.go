@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"fmt"
-	"reflect"
 )
 
 // Net is the structure representing a feed-forward artificial network.
@@ -39,11 +38,6 @@ func (net *Net) GobEncode() ([]byte, error) {
 	w := new(bytes.Buffer)
 	var err error
 	encoder := gob.NewEncoder(w)
-
-	// TODO: Add in reflect.TypeOf for the scalers in case there is an error
-	// and for the losser
-
-	fmt.Println(reflect.TypeOf(net.Losser))
 	err = encoder.Encode(&net.Losser)
 	if err != nil {
 		return nil, fmt.Errorf("Error encoding Losser: %v", err)
@@ -56,31 +50,17 @@ func (net *Net) GobEncode() ([]byte, error) {
 
 	err = encoder.Encode(&net.OutputScaler)
 	if err != nil {
-		return nil, fmt.Errorf("Error decoding output scaler: %v", err)
+		return nil, fmt.Errorf("Error encoding output scaler: %v", err)
 	}
 
 	err = encoder.Encode(net.nInputs)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error encoding nInputs: %v", err)
 	}
 	err = encoder.Encode(len(net.layers))
 	if err != nil {
 		return nil, err
 	}
-	/*
-		err = encoder.Encode(net.nOutputs)
-		if err != nil {
-			return nil, err
-		}
-		err = encoder.Encode(net.nParameters)
-		if err != nil {
-			return nil, err
-		}
-		err = encoder.Encode(net.parameterIdx)
-		if err != nil {
-			return nil, err
-		}
-	*/
 	for i := range net.layers {
 		err = encoder.Encode(net.layers[i])
 		if err != nil {
@@ -115,14 +95,10 @@ func (net *Net) GobDecode(buf []byte) error {
 		return fmt.Errorf("Error decoding losser: %v", err)
 	}
 
-	fmt.Println("decoded type of losser is : ", reflect.TypeOf(net.Losser))
-
 	err = decoder.Decode(&net.InputScaler)
 	if err != nil {
 		return fmt.Errorf("Error decoding input scaler: %v", err)
 	}
-
-	fmt.Println("decoded type of input scaler is : ", reflect.TypeOf(net.InputScaler))
 
 	err = decoder.Decode(&net.OutputScaler)
 	if err != nil {
@@ -130,28 +106,13 @@ func (net *Net) GobDecode(buf []byte) error {
 	}
 	err = decoder.Decode(&net.nInputs)
 	if err != nil {
-		return err
+		return fmt.Errorf("Error decoding nInputs: %v", err)
 	}
 	var nLayers int
 	err = decoder.Decode(&nLayers)
 	if err != nil {
-		return err
+		return fmt.Errorf("Error decoding nLayers: %v", err)
 	}
-
-	/*
-		err = decoder.Decode(&net.nOutputs)
-		if err != nil {
-			return err
-		}
-		err = decoder.Decode(&net.nParameters)
-		if err != nil {
-			return err
-		}
-		err = decoder.Decode(&net.parameterIdx)
-		if err != nil {
-			return err
-		}
-	*/
 	net.layers = make([]Layer, nLayers)
 	for i := range net.layers {
 		err = decoder.Decode(&net.layers[i])
@@ -159,17 +120,7 @@ func (net *Net) GobDecode(buf []byte) error {
 			return fmt.Errorf("Error decoding layer: %v", err)
 		}
 	}
-	/*
-		err = decoder.Decode(&net.layers)
-		if err != nil {
-			return err
-		}
-	*/
-	fmt.Println("Done decoding layers")
-	fmt.Println(net.layers)
-
 	net.new()
-
 	err = decoder.Decode(&net.parameters)
 	if err != nil {
 		return fmt.Errorf("Error decoding parameters: %v", err)
@@ -461,7 +412,6 @@ func (l *Layer) GobEncode() ([]byte, error) {
 		return nil, fmt.Errorf("Error encoding nNeurons: %v", err)
 	}
 	for _, neur := range l.Neurons {
-		fmt.Println("In layer encode, type of neuron is:", reflect.TypeOf(neur))
 		var islocal bool
 		switch neur.(type) {
 		case *SumNeuron:
@@ -471,9 +421,12 @@ func (l *Layer) GobEncode() ([]byte, error) {
 				return nil, fmt.Errorf("Error encoding islocal: %v", err)
 			}
 			typeNumber := 0
-			encoder.Encode(typeNumber)
+			err = encoder.Encode(typeNumber)
+			if err != nil {
+				return nil, fmt.Errorf("Error encoding type number ")
+			}
 			s := neur.(*SumNeuron)
-			err = encoder.Encode(&s)
+			err = encoder.Encode(s)
 			if err != nil {
 				return nil, fmt.Errorf("Error encoding sumneuron: %v", err)
 			}
@@ -490,13 +443,11 @@ func (l *Layer) GobEncode() ([]byte, error) {
 }
 
 func (l *Layer) GobDecode(buf []byte) error {
-	fmt.Println("In layer decode")
 	r := bytes.NewBuffer(buf)
 	decoder := gob.NewDecoder(r)
 	var err error
 	nNeurons := 0
 	err = decoder.Decode(&nNeurons)
-	fmt.Println(nNeurons)
 	if err != nil {
 		return fmt.Errorf("Error decoding nNeurons: ")
 	}
@@ -505,31 +456,28 @@ func (l *Layer) GobDecode(buf []byte) error {
 	for i := range l.Neurons {
 		err = decoder.Decode(&islocal)
 		if err != nil {
-			return err
+			return fmt.Errorf("Error decoding isLocal: %v", err)
 		}
 		if islocal {
 			var typeNumber int
 			err = decoder.Decode(&typeNumber)
+			if err != nil {
+				return fmt.Errorf("Error deciding typeNumber: %v", err)
+			}
 			switch typeNumber {
 			case 0:
-				var sn *SumNeuron
-				err = decoder.Decode(sn)
+				sn := &SumNeuron{}
+				err = decoder.Decode(&sn)
 				if err != nil {
-					return err
+					return fmt.Errorf("Error decoding sumNeuron: %v", err)
 				}
 				l.Neurons[i] = sn
 			default:
-				panic("Not coded generic neurons")
+				panic("Unknown internal type")
 			}
-
+		} else {
+			panic("haven't coded external neuron type")
 		}
-		/*
-			err = decoder.Decode(l.Neurons[i])
-			if err != nil {
-				return fmt.Errorf("error decoding neuron: %v", err)
-			}
-		*/
-		fmt.Println("Neuron decoded, type is ", reflect.TypeOf(l.Neurons[i]))
 	}
 	return nil
 }
