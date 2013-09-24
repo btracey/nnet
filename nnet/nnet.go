@@ -61,18 +61,11 @@ func (net *Net) GobEncode() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	for i := range net.layers {
-		err = encoder.Encode(net.layers[i])
-		if err != nil {
-			return nil, err
-		}
+
+	err = encoder.Encode(net.layers)
+	if err != nil {
+		return nil, err
 	}
-	/*
-		err = encoder.Encode(net.layers)
-		if err != nil {
-			return nil, err
-		}
-	*/
 
 	net.new()
 
@@ -113,12 +106,10 @@ func (net *Net) GobDecode(buf []byte) error {
 	if err != nil {
 		return fmt.Errorf("Error decoding nLayers: %v", err)
 	}
-	net.layers = make([]Layer, nLayers)
-	for i := range net.layers {
-		err = decoder.Decode(&net.layers[i])
-		if err != nil {
-			return fmt.Errorf("Error decoding layer: %v", err)
-		}
+
+	err = decoder.Decode(&net.layers)
+	if err != nil {
+		return fmt.Errorf("Error decoding layers: %v", err)
 	}
 	net.new()
 	err = decoder.Decode(&net.parameters)
