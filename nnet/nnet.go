@@ -57,10 +57,6 @@ func (net *Net) GobEncode() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error encoding nInputs: %v", err)
 	}
-	err = encoder.Encode(len(net.layers))
-	if err != nil {
-		return nil, err
-	}
 
 	err = encoder.Encode(net.layers)
 	if err != nil {
@@ -100,11 +96,6 @@ func (net *Net) GobDecode(buf []byte) error {
 	err = decoder.Decode(&net.nInputs)
 	if err != nil {
 		return fmt.Errorf("Error decoding nInputs: %v", err)
-	}
-	var nLayers int
-	err = decoder.Decode(&nLayers)
-	if err != nil {
-		return fmt.Errorf("Error decoding nLayers: %v", err)
 	}
 
 	err = decoder.Decode(&net.layers)
