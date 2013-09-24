@@ -33,6 +33,7 @@ func TestGob(t *testing.T) {
 	bytes, err := net.GobEncode()
 	if err != nil {
 		t.Error(err)
+		return
 	}
 
 	predictionsNet1, err := net.PredictSlice(rInput)
@@ -44,6 +45,7 @@ func TestGob(t *testing.T) {
 	err = net2.GobDecode(bytes)
 	if err != nil {
 		t.Errorf("Error decoding net2: %v ", err)
+		return
 	}
 	predictionsNet2, err := net2.PredictSlice(rInput)
 	if err != nil {

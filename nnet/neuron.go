@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	gob.Register(SumNeuron{Activator: activator.Tanh{}})
+	gob.Register(&SumNeuron{Activator: activator.LinearTanh{}})
 }
 
 var (

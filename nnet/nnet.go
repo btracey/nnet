@@ -414,26 +414,33 @@ func (l *Layer) GobEncode() ([]byte, error) {
 	for _, neur := range l.Neurons {
 		var islocal bool
 		switch neur.(type) {
-		case *SumNeuron:
-			islocal = true
-			err = encoder.Encode(islocal)
-			if err != nil {
-				return nil, fmt.Errorf("Error encoding islocal: %v", err)
-			}
-			typeNumber := 0
-			err = encoder.Encode(typeNumber)
-			if err != nil {
-				return nil, fmt.Errorf("Error encoding type number ")
-			}
-			s := neur.(*SumNeuron)
-			err = encoder.Encode(s)
-			if err != nil {
-				return nil, fmt.Errorf("Error encoding sumneuron: %v", err)
-			}
+		/*
+			case *SumNeuron:
+				islocal = true
+				err = encoder.Encode(islocal)
+				if err != nil {
+					return nil, fmt.Errorf("Error encoding islocal: %v", err)
+				}
+				typeNumber := 0
+				err = encoder.Encode(typeNumber)
+				if err != nil {
+					return nil, fmt.Errorf("Error encoding type number ")
+				}
+				s := neur.(*SumNeuron)
+				err = encoder.Encode(s)
+				if err != nil {
+					return nil, fmt.Errorf("Error encoding sumneuron: %v", err)
+				}
+		*/
 		default:
 			islocal = false
 			encoder.Encode(islocal)
-			err = encoder.Encode(neur)
+			fmt.Println("Encoding neuron")
+			fmt.Println(len(w.Bytes()))
+			//			n := &neur
+
+			err = encoder.Encode(&neur)
+			fmt.Println(len(w.Bytes()))
 			if err != nil {
 				return nil, fmt.Errorf("Error encoding neuron: %v", err)
 			}
@@ -443,6 +450,9 @@ func (l *Layer) GobEncode() ([]byte, error) {
 }
 
 func (l *Layer) GobDecode(buf []byte) error {
+	// Bit of trickery because the types we define in the package must be decoded
+	// specially. Not sure why.
+
 	r := bytes.NewBuffer(buf)
 	decoder := gob.NewDecoder(r)
 	var err error
@@ -476,7 +486,17 @@ func (l *Layer) GobDecode(buf []byte) error {
 				panic("Unknown internal type")
 			}
 		} else {
-			panic("haven't coded external neuron type")
+			fmt.Println(i)
+			fmt.Println(l.Neurons)
+			fmt.Println(l.Neurons[i])
+			//var neur *Neuron
+			err = decoder.Decode(&l.Neurons[i])
+			if err != nil {
+				fmt.Println("Error decoding neuron")
+				return fmt.Errorf("Error decoding neuron: %v", err)
+			}
+			//l.Neurons[i] = *neur
+			//fmt.Println(neur)
 		}
 	}
 	return nil
