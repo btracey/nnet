@@ -402,49 +402,6 @@ type Layer struct {
 	Neurons []Neuron
 }
 
-/*
-func (l *Layer) GobEncode() ([]byte, error) {
-	w := new(bytes.Buffer)
-	var err error
-	encoder := gob.NewEncoder(w)
-	nNeurons := len(l.Neurons)
-	err = encoder.Encode(nNeurons)
-	if err != nil {
-		return nil, fmt.Errorf("Error encoding nNeurons: %v", err)
-	}
-	for _, neur := range l.Neurons {
-		err = encoder.Encode(&neur)
-		if err != nil {
-			return nil, fmt.Errorf("Error encoding neuron: %v", err)
-		}
-
-	}
-	return w.Bytes(), err
-}
-
-func (l *Layer) GobDecode(buf []byte) error {
-	// Bit of trickery because the types we define in the package must be decoded
-	// specially. Not sure why.
-
-	r := bytes.NewBuffer(buf)
-	decoder := gob.NewDecoder(r)
-	var err error
-	nNeurons := 0
-	err = decoder.Decode(&nNeurons)
-	if err != nil {
-		return fmt.Errorf("Error decoding nNeurons: ")
-	}
-	l.Neurons = make([]Neuron, nNeurons)
-	//var islocal bool
-	for i := range l.Neurons {
-		err = decoder.Decode(&l.Neurons[i])
-		if err != nil {
-			return fmt.Errorf("Error decoding neuron: %v", err)
-		}
-	}
-	return nil
-}
-*/
 // ProcessNeuron computes
 func ProcessNeuron(neuron Neuron, parameters, inputs []float64) (combination, output float64) {
 	combination = neuron.Combine(parameters, inputs)
