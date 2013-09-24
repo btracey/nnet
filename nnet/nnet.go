@@ -7,9 +7,9 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
-	"sync"
-
 	"fmt"
+	"io/ioutil"
+	"sync"
 )
 
 // Net is the structure representing a feed-forward artificial network.
@@ -109,6 +109,29 @@ func (net *Net) GobDecode(buf []byte) error {
 	}
 
 	return nil
+}
+
+// Save saves the neural net
+func (net *Net) Save(filename string) error {
+	bytes, err := net.GobEncode()
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filename, bytes, 0700)
+}
+
+// Load loads in a neural net from a file.
+func Load(filename string) (*Net, error) {
+	bytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	net := &Net{}
+	err = net.GobDecode(bytes)
+	if err != nil {
+		return nil, err
+	}
+	return net, nil
 }
 
 // new fills a net that already has the nInputs and the layers specified
