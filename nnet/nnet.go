@@ -402,6 +402,7 @@ type Layer struct {
 	Neurons []Neuron
 }
 
+/*
 func (l *Layer) GobEncode() ([]byte, error) {
 	w := new(bytes.Buffer)
 	var err error
@@ -443,7 +444,7 @@ func (l *Layer) GobDecode(buf []byte) error {
 	}
 	return nil
 }
-
+*/
 // ProcessNeuron computes
 func ProcessNeuron(neuron Neuron, parameters, inputs []float64) (combination, output float64) {
 	combination = neuron.Combine(parameters, inputs)
