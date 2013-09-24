@@ -13,11 +13,13 @@ import (
 )
 
 func testGob(s Scaler, sdecode Scaler, t *testing.T) {
+
+	fmt.Println("sdecode pre")
+	fmt.Println(sdecode)
+
 	w := new(bytes.Buffer)
 	encoder := gob.NewEncoder(w)
-	fmt.Println("starting encoding")
 	err := encoder.Encode(s)
-	fmt.Println("done encoding")
 	if err != nil {
 		t.Error(err)
 	}
@@ -29,6 +31,11 @@ func testGob(s Scaler, sdecode Scaler, t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
+	fmt.Println("s")
+	fmt.Println(s)
+	fmt.Println("sdecode")
+	fmt.Println(sdecode)
 	isequal := reflect.DeepEqual(s, sdecode)
 	if !isequal {
 		t.Errorf("reflect DeepEqual doesn't match")

@@ -6,9 +6,14 @@ import (
 	"errors"
 	"github.com/gonum/floats"
 	"math"
-
-	"fmt"
 )
+
+func init() {
+	gob.Register(&None{})
+	gob.Register(&Linear{})
+	gob.Register(&Normal{})
+	gob.Register(&Probability{})
+}
 
 // IdenticalDimensions is an error type expressing that
 // a dimension all had equal values. Dims is a list of unequal dimensions
@@ -37,8 +42,6 @@ type Scaler interface {
 	IsScaled() bool                  // Returns true if the scale for this type has already been set
 	Dimensions() int                 //Number of dimensions for wihich the data was scaled
 	SetScale(data [][]float64) error // Uses the input data to set the scale
-	gob.GobEncoder
-	gob.GobDecoder
 }
 
 // ScaleData scales every point in the data using the scaler
@@ -155,9 +158,8 @@ func (l *Linear) Dimensions() int {
 	return l.Dim
 }
 
+/*
 func (l *Linear) GobEncode() ([]byte, error) {
-
-	fmt.Println("Starting linear GobEncode")
 	w := new(bytes.Buffer)
 	encoder := gob.NewEncoder(w)
 	err := encoder.Encode(l.Min)
@@ -196,6 +198,7 @@ func (l *Linear) GobDecode(buf []byte) error {
 	}
 	return decoder.Decode(&l.Dim)
 }
+*/
 
 // SetScale sets a linear scale between 0 and 1. If no data
 // points. If the minimum and maximum value are identical in
@@ -300,6 +303,7 @@ func (n *Normal) Dimensions() int {
 	return n.Dim
 }
 
+/*
 func (n *Normal) GobEncode() ([]byte, error) {
 	w := new(bytes.Buffer)
 	encoder := gob.NewEncoder(w)
@@ -343,6 +347,7 @@ func (n *Normal) GobDecode(buf []byte) error {
 	}
 	return nil
 }
+*/
 
 // Finds the appropriate scaling of the data such that the dataset has
 //  a mean of 0 and a variance of 1. If the standard deviation of any of
@@ -441,6 +446,7 @@ type Probability struct {
 	Scaled               bool
 }
 
+/*
 func (p *Probability) GobEncode() ([]byte, error) {
 	w := new(bytes.Buffer)
 	encoder := gob.NewEncoder(w)
@@ -480,6 +486,7 @@ func (p *Probability) GobDecode(buf []byte) error {
 	}
 	return decoder.Decode(&p.Scaled)
 }
+*/
 
 // IsScaled returns true if the scale has been set
 func (p *Probability) IsScaled() bool {

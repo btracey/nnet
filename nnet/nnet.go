@@ -4,8 +4,13 @@ import (
 	"github.com/btracey/nnet/loss"
 	"github.com/btracey/nnet/scale"
 
+	"bytes"
+	"encoding/gob"
 	"errors"
 	"sync"
+
+	"fmt"
+	"reflect"
 )
 
 // Net is the structure representing a feed-forward artificial network.
@@ -18,22 +23,165 @@ type Net struct {
 	//NeuronActivator activator.Activator
 	//FinalActivator  activator.Activator
 
-	layers             []Layer
-	parameters         [][][]float64
-	parametersSlice    []float64
 	nInputs            int
 	nOutputs           int
 	totalNumParameters int
-	nParameters        [][]int // Number of parameters per neuron
-	parameterIdx       [][]int // The starting index of the weights of the neuron
+
+	nParameters  [][]int // Number of parameters per neuron
+	parameterIdx [][]int // The starting index of the weights of the neuron
+
+	layers          []Layer
+	parameters      [][][]float64
+	parametersSlice []float64
 }
 
-// NewNet creates a new net
-func NewNet(nInputs int, layers []Layer) *Net {
-	net := &Net{
-		layers:  layers,
-		nInputs: nInputs,
+func (net *Net) GobEncode() ([]byte, error) {
+	w := new(bytes.Buffer)
+	var err error
+	encoder := gob.NewEncoder(w)
+
+	// TODO: Add in reflect.TypeOf for the scalers in case there is an error
+	// and for the losser
+
+	fmt.Println(reflect.TypeOf(net.Losser))
+	err = encoder.Encode(&net.Losser)
+	if err != nil {
+		return nil, fmt.Errorf("Error encoding Losser: %v", err)
 	}
+
+	err = encoder.Encode(&net.InputScaler)
+	if err != nil {
+		return nil, fmt.Errorf("Error encoding input scaler: %v", err)
+	}
+
+	err = encoder.Encode(&net.OutputScaler)
+	if err != nil {
+		return nil, fmt.Errorf("Error decoding output scaler: %v", err)
+	}
+
+	err = encoder.Encode(net.nInputs)
+	if err != nil {
+		return nil, err
+	}
+	err = encoder.Encode(len(net.layers))
+	if err != nil {
+		return nil, err
+	}
+	/*
+		err = encoder.Encode(net.nOutputs)
+		if err != nil {
+			return nil, err
+		}
+		err = encoder.Encode(net.nParameters)
+		if err != nil {
+			return nil, err
+		}
+		err = encoder.Encode(net.parameterIdx)
+		if err != nil {
+			return nil, err
+		}
+	*/
+	for i := range net.layers {
+		err = encoder.Encode(net.layers[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	/*
+		err = encoder.Encode(net.layers)
+		if err != nil {
+			return nil, err
+		}
+	*/
+
+	net.new()
+
+	err = encoder.Encode(&net.parameters)
+	if err != nil {
+		return nil, err
+	}
+	return w.Bytes(), nil
+}
+
+// GobDecode some comment about needing to register custom types
+func (net *Net) GobDecode(buf []byte) error {
+	r := bytes.NewBuffer(buf)
+	decoder := gob.NewDecoder(r)
+
+	var err error
+
+	err = decoder.Decode(&net.Losser)
+	if err != nil {
+		return fmt.Errorf("Error decoding losser: %v", err)
+	}
+
+	fmt.Println("decoded type of losser is : ", reflect.TypeOf(net.Losser))
+
+	err = decoder.Decode(&net.InputScaler)
+	if err != nil {
+		return fmt.Errorf("Error decoding input scaler: %v", err)
+	}
+
+	fmt.Println("decoded type of input scaler is : ", reflect.TypeOf(net.InputScaler))
+
+	err = decoder.Decode(&net.OutputScaler)
+	if err != nil {
+		return fmt.Errorf("Error decoding output scaler: %v", err)
+	}
+	err = decoder.Decode(&net.nInputs)
+	if err != nil {
+		return err
+	}
+	var nLayers int
+	err = decoder.Decode(&nLayers)
+	if err != nil {
+		return err
+	}
+
+	/*
+		err = decoder.Decode(&net.nOutputs)
+		if err != nil {
+			return err
+		}
+		err = decoder.Decode(&net.nParameters)
+		if err != nil {
+			return err
+		}
+		err = decoder.Decode(&net.parameterIdx)
+		if err != nil {
+			return err
+		}
+	*/
+	net.layers = make([]Layer, nLayers)
+	for i := range net.layers {
+		err = decoder.Decode(&net.layers[i])
+		if err != nil {
+			return fmt.Errorf("Error decoding layer: %v", err)
+		}
+	}
+	/*
+		err = decoder.Decode(&net.layers)
+		if err != nil {
+			return err
+		}
+	*/
+	fmt.Println("Done decoding layers")
+	fmt.Println(net.layers)
+
+	net.new()
+
+	err = decoder.Decode(&net.parameters)
+	if err != nil {
+		return fmt.Errorf("Error decoding parameters: %v", err)
+	}
+
+	return nil
+}
+
+// new fills a net that already has the nInputs and the layers specified
+func (net *Net) new() {
+	layers := net.layers
+	nInputs := net.nInputs
 	totalNumParameters := 0
 	nParameters := make([][]int, len(layers))
 	parameterIdx := make([][]int, len(layers))
@@ -70,6 +218,15 @@ func NewNet(nInputs int, layers []Layer) *Net {
 	}
 	net.nOutputs = len(layers[len(layers)-1].Neurons)
 	net.RandomizeParameters()
+}
+
+// NewNet creates a new net
+func NewNet(nInputs int, layers []Layer) *Net {
+	net := &Net{
+		layers:  layers,
+		nInputs: nInputs,
+	}
+	net.new()
 	return net
 }
 
@@ -292,6 +449,89 @@ func DefaultRegression(nInputs, nOutputs, nHiddenLayers, nNeuronsPerHiddenLayer 
 // layer represents a layer of neurons
 type Layer struct {
 	Neurons []Neuron
+}
+
+func (l *Layer) GobEncode() ([]byte, error) {
+	w := new(bytes.Buffer)
+	var err error
+	encoder := gob.NewEncoder(w)
+	nNeurons := len(l.Neurons)
+	err = encoder.Encode(nNeurons)
+	if err != nil {
+		return nil, fmt.Errorf("Error encoding nNeurons: %v", err)
+	}
+	for _, neur := range l.Neurons {
+		fmt.Println("In layer encode, type of neuron is:", reflect.TypeOf(neur))
+		var islocal bool
+		switch neur.(type) {
+		case *SumNeuron:
+			islocal = true
+			err = encoder.Encode(islocal)
+			if err != nil {
+				return nil, fmt.Errorf("Error encoding islocal: %v", err)
+			}
+			typeNumber := 0
+			encoder.Encode(typeNumber)
+			s := neur.(*SumNeuron)
+			err = encoder.Encode(&s)
+			if err != nil {
+				return nil, fmt.Errorf("Error encoding sumneuron: %v", err)
+			}
+		default:
+			islocal = false
+			encoder.Encode(islocal)
+			err = encoder.Encode(neur)
+			if err != nil {
+				return nil, fmt.Errorf("Error encoding neuron: %v", err)
+			}
+		}
+	}
+	return w.Bytes(), err
+}
+
+func (l *Layer) GobDecode(buf []byte) error {
+	fmt.Println("In layer decode")
+	r := bytes.NewBuffer(buf)
+	decoder := gob.NewDecoder(r)
+	var err error
+	nNeurons := 0
+	err = decoder.Decode(&nNeurons)
+	fmt.Println(nNeurons)
+	if err != nil {
+		return fmt.Errorf("Error decoding nNeurons: ")
+	}
+	l.Neurons = make([]Neuron, nNeurons)
+	var islocal bool
+	for i := range l.Neurons {
+		err = decoder.Decode(&islocal)
+		if err != nil {
+			return err
+		}
+		if islocal {
+			var typeNumber int
+			err = decoder.Decode(&typeNumber)
+			switch typeNumber {
+			case 0:
+				var sn *SumNeuron
+				err = decoder.Decode(sn)
+				if err != nil {
+					return err
+				}
+				l.Neurons[i] = sn
+			default:
+				panic("Not coded generic neurons")
+			}
+
+		}
+		/*
+			err = decoder.Decode(l.Neurons[i])
+			if err != nil {
+				return fmt.Errorf("error decoding neuron: %v", err)
+			}
+		*/
+		fmt.Println("Neuron decoded, type is ", reflect.TypeOf(l.Neurons[i]))
+	}
+	return nil
 }
 
 // ProcessNeuron computes

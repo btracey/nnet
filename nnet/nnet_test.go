@@ -9,12 +9,48 @@ import (
 	"math/rand"
 
 	"fmt"
+	"reflect"
 )
 
 const (
 	netFDStep = 1e-6
 	netFDTol  = 1e-8
 )
+
+func TestGob(t *testing.T) {
+	nInputs := 4
+	nOutputs := 5
+	nLayers := 1
+	nNeuronsPerLayer := 7
+	rInput := RandomData(nInputs, 100)
+	rOutput := RandomData(nInputs, 100)
+
+	net := DefaultRegression(nInputs, nOutputs, nLayers, nNeuronsPerLayer)
+	net.InputScaler = &scale.Linear{}
+	net.InputScaler.SetScale(rInput)
+	net.OutputScaler = &scale.Normal{}
+	net.OutputScaler.SetScale(rOutput)
+
+	bytes, err := net.GobEncode()
+	if err != nil {
+		t.Error(err)
+	}
+
+	fmt.Println("Done encoding")
+
+	/*
+		net2 := DefaultRegression(nInputs, nOutputs, nLayers, nNeuronsPerLayer)
+		net2.InputScaler = &scale.Linear{}
+		net2.InputScaler.SetScale(rInput)
+		net2.OutputScaler = &scale.Normal{}
+	*/
+	net2 := &Net{}
+	fmt.Println("net2 input scaler type:", reflect.TypeOf(net2.InputScaler))
+	err = net2.GobDecode(bytes)
+	if err != nil {
+		t.Errorf("Error decoding net2: %v ", err)
+	}
+}
 
 func RandomData(size int, numberOfSamples int) [][]float64 {
 	data := make([][]float64, numberOfSamples)

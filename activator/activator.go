@@ -1,6 +1,16 @@
 package activator
 
-import "math"
+import (
+	"encoding/gob"
+	"math"
+)
+
+func init() {
+	gob.Register(Sigmoid{})
+	gob.Register(Linear{})
+	gob.Register(Tanh{})
+	gob.Register(LinearTanh{})
+}
 
 // A set of built-in Activator types
 
@@ -14,6 +24,8 @@ import "math"
 // the weighted sum itself and the output of Activate. This complication
 // arises from the fact that some derivatives are significantly easier
 // to compute given one value or the other.
+//
+// GobDecode functions exist to allow easy saving
 type Activator interface {
 	Activate(sum float64) float64
 	DActivateDCombination(sum float64, output float64) float64
