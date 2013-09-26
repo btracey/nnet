@@ -31,9 +31,66 @@ func GetChunkSize(inputs int) int {
 	return chunkSize
 }
 
-func SetScale(inputs, outputs [][]float64, net *nnet.Net) {
-	net.InputScaler.SetScale(inputs)
-	net.OutputScaler.SetScale(outputs)
+func SetScale(inputs, outputs [][]float64, net *nnet.Net) error {
+	err := net.InputScaler.SetScale(inputs)
+	if err != nil {
+		return err
+	}
+	return net.OutputScaler.SetScale(outputs)
+}
+
+func ScaleTrainingData(net *nnet.Net, trainInputs, trainOutputs, testInputs, testOutputs [][]float64) error {
+	err := SetScale(trainInputs, trainOutputs, net)
+	if err != nil {
+		return err
+	}
+	err = scale.ScaleData(net.InputScaler, trainInputs)
+	if err != nil {
+		return err
+	}
+
+	err = scale.ScaleData(net.OutputScaler, trainOutputs)
+	if err != nil {
+		return err
+	}
+	if testInputs != nil {
+		err = scale.ScaleData(net.InputScaler, testInputs)
+		if err != nil {
+			return err
+		}
+	}
+	if testOutputs != nil {
+		scale.ScaleData(net.OutputScaler, testOutputs)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func UnscaleTrainingData(net *nnet.Net, trainInputs, trainOutputs, testInputs, testOutputs [][]float64) error {
+	err := scale.UnscaleData(net.InputScaler, trainInputs)
+	if err != nil {
+		return err
+	}
+
+	err = scale.UnscaleData(net.OutputScaler, trainOutputs)
+	if err != nil {
+		return err
+	}
+	if testInputs != nil {
+		err = scale.UnscaleData(net.InputScaler, testInputs)
+		if err != nil {
+			return err
+		}
+	}
+	if testOutputs != nil {
+		scale.UnscaleData(net.OutputScaler, testOutputs)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // OneFoldTrain trains the net by splitting the data into a training and a testing
@@ -100,81 +157,22 @@ func NewOneFoldTrain(net *nnet.Net, losser loss.Losser, inputs, outputs [][]floa
 		o.TrainInputs[i] = inputs[rp[nTest+i]]
 		o.TrainOutputs[i] = outputs[rp[nTest+i]]
 	}
-
-	/*
-		var n int
-		// Copy the test data over
-		for i := range o.TestInputs {
-			o.TestInputs[i] = make([]float64, nInputs)
-			n = copy(o.TestInputs[i], inputs[rp[i]])
-			if n != nInputs {
-				panic("all inputs must have the same length")
-			}
-			o.TestOutputs[i] = make([]float64, nOutputs)
-			n = copy(o.TestOutputs[i], outputs[rp[i]])
-			if n != nOutputs {
-				panic("all outputs must have the same length")
-			}
-		}
-		// Copy the train data over
-		for i := range o.TrainInputs {
-			o.TrainInputs[i] = make([]float64, nInputs)
-			n = copy(o.TrainInputs[i], inputs[rp[nTest+i]])
-			if n != nInputs {
-				panic("all inputs must have the same length")
-			}
-			o.TrainOutputs[i] = make([]float64, nOutputs)
-			n = copy(o.TrainOutputs[i], outputs[rp[nTest+i]])
-			if n != nOutputs {
-				panic("all outputs must have the same length")
-			}
-		}
-	*/
-
-	//fmt.Println("inputs", inputs)
-	//fmt.Println("TrainInputs", o.TrainInputs)
-	//fmt.Println("TestInputs", o.TestInputs)
 	return o
 }
 
-func (o *OneFoldTrain) Init() error {
-
-	fmt.Println("One fold train initialize")
-	SetScale(o.TrainInputs, o.TrainOutputs, o.net)
-	fmt.Println("input scaler:", o.net.InputScaler)
-	fmt.Println("output scaler:", o.net.InputScaler)
-	scale.ScaleData(o.net.InputScaler, o.TrainInputs)
-	scale.ScaleData(o.net.OutputScaler, o.TrainOutputs)
-	scale.ScaleData(o.net.InputScaler, o.TestInputs)
-	scale.ScaleData(o.net.OutputScaler, o.TestOutputs)
-	fmt.Println("Done scale")
-
-	/*
-		fmt.Println(o.net.InputMean)
-		fmt.Println(o.net.InputStd)
-		fmt.Println(o.net.OutputMean)
-		fmt.Println(o.net.OutputStd)
-	*/
-
-	/*
-		for i := range o.TrainInputs {
-			fmt.Println(o.TrainInputs[i])
-		}
-		for i := range o.TrainOutputs {
-			fmt.Println(o.TrainOutputs[i])
-		}
-	*/
+func (o *OneFoldTrain) Scale() error {
+	err := ScaleTrainingData(o.net, o.TrainInputs, o.TrainOutputs, o.TestInputs, o.TestOutputs)
+	if err != nil {
+		return err
+	}
 	if o.net.Losser == nil {
 		return fmt.Errorf("Net does not have Losser set")
 	}
 	return nil
 }
 
-func (o *OneFoldTrain) Result() {
-	scale.UnscaleData(o.net.InputScaler, o.TrainInputs)
-	scale.UnscaleData(o.net.InputScaler, o.TestInputs)
-	scale.UnscaleData(o.net.OutputScaler, o.TrainOutputs)
-	scale.UnscaleData(o.net.OutputScaler, o.TestOutputs)
+func (o *OneFoldTrain) Unscale() error {
+	return UnscaleTrainingData(o.net, o.TrainInputs, o.TrainOutputs, o.TestInputs, o.TestOutputs)
 }
 
 func (o *OneFoldTrain) Status() common.Status {

@@ -9,6 +9,7 @@ import (
 	"math/rand"
 
 	"fmt"
+	"reflect"
 )
 
 const (
@@ -47,6 +48,11 @@ func TestGob(t *testing.T) {
 		t.Errorf("Error decoding net2: %v ", err)
 		return
 	}
+
+	if !reflect.DeepEqual(net, net2) {
+		t.Errorf("Nets don't match after encoding and decoding")
+	}
+
 	predictionsNet2, err := net2.PredictSlice(rInput)
 	if err != nil {
 		t.Error("Error predicting on net 2")
@@ -57,6 +63,21 @@ func TestGob(t *testing.T) {
 			t.Errorf("Predictions don't match")
 			return
 		}
+	}
+
+	filename := "testnet.gob"
+	err = net.Save(filename)
+	if err != nil {
+		t.Errorf("Error saving net: %v", err)
+	}
+
+	net3, err := Load(filename)
+	if err != nil {
+		t.Errorf("Error loading net: %v", err)
+	}
+
+	if !reflect.DeepEqual(net, net3) {
+		t.Errorf("Not equal after save and load")
 	}
 }
 

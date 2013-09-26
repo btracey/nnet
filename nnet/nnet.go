@@ -296,7 +296,7 @@ func (net *Net) Predict(input []float64) (pred []float64, err error) {
 	defer net.InputScaler.Unscale(input)
 
 	Predict(input, net, predOutput, predictTmpMemory.combinations, predictTmpMemory.outputs)
-	net.OutputScaler.Unscale(predOutput)
+	defer net.OutputScaler.Unscale(predOutput)
 	return predOutput, nil
 }
 
