@@ -183,7 +183,6 @@ func (o *OneFoldTrain) Status() common.Status {
 }
 
 func (o *OneFoldTrain) ObjGrad(weights []float64) (loss float64, deriv []float64, err error) {
-
 	o.net.SetParametersSlice(weights)
 
 	trainLossChan := make(chan float64)
@@ -200,9 +199,7 @@ func (o *OneFoldTrain) ObjGrad(weights []float64) (loss float64, deriv []float64
 	go func() {
 		o.trainLoss = <-trainLossChan
 		o.trainLoss /= float64(len(o.TrainInputs))
-		//fmt.Println("Train 2 norm", floats.Norm(dLossDParamTrainFlat, 2))
 		floats.Scale(1/float64(len(o.TrainInputs)), o.dLossDParamTrainFlat)
-		//fmt.Println("Train 2 norm", floats.Norm(dLossDParamTrainFlat, 2))
 		w.Done()
 	}()
 	go func() {
@@ -217,12 +214,6 @@ func (o *OneFoldTrain) ObjGrad(weights []float64) (loss float64, deriv []float64
 	o.lossRatio = o.testLoss / o.trainLoss
 
 	o.AddToHistory(o.testLoss)
-	//	fmt.Println()
-
-	//fmt.Println("Done waiting")
-	//fmt.Println("trainLoss", o.trainLoss)
-	//fmt.Println("nTrain", float64(len(o.TrainInputs)))
-	//fmt.Println("nTest", float64(len(o.TestInputs)))
 	return o.trainLoss, o.dLossDParamTrainFlat, nil
 }
 

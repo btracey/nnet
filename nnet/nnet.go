@@ -63,8 +63,6 @@ func (net *Net) GobEncode() ([]byte, error) {
 		return nil, err
 	}
 
-	net.new()
-
 	err = encoder.Encode(&net.parameters)
 	if err != nil {
 		return nil, err
