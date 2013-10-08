@@ -273,11 +273,20 @@ func (net *Net) NewPerInputMemory() [][][]float64 {
 	return mem
 }
 
+type InputMismatch struct {
+	Provided int
+	Expected int
+}
+
+func (i InputMismatch) Error() string {
+	return fmt.Sprintf("Length of input must match the number of inputs of the net. %i inputs prodived, but the net has %i inputs", i.Provided, i.Expected)
+}
+
 // Predict predicts the value at the input location. Panics if
 // len(input) != net.NumInputs() and if len(output) != net.NumOutputs()
 func (net *Net) Predict(input []float64) (pred []float64, err error) {
 	if len(input) != net.nInputs {
-		return nil, errors.New("Length of input must match net.nOutputs")
+		return nil, InputMismatch{Provided: len(pred), Expected: net.nInputs}
 	}
 
 	predOutput := make([]float64, net.nOutputs)
