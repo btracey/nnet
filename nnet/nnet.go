@@ -286,7 +286,7 @@ func (i InputMismatch) Error() string {
 // len(input) != net.NumInputs() and if len(output) != net.NumOutputs()
 func (net *Net) Predict(input []float64) (pred []float64, err error) {
 	if len(input) != net.nInputs {
-		return nil, InputMismatch{Provided: len(pred), Expected: net.nInputs}
+		return nil, InputMismatch{Provided: len(input), Expected: net.nInputs}
 	}
 
 	predOutput := make([]float64, net.nOutputs)
