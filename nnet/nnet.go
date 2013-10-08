@@ -279,7 +279,7 @@ type InputMismatch struct {
 }
 
 func (i InputMismatch) Error() string {
-	return fmt.Sprintf("Length of input must match the number of inputs of the net. %i inputs prodived, but the net has %i inputs", i.Provided, i.Expected)
+	return fmt.Sprintf("Length of input must match the number of inputs of the net. %d inputs prodived, but the net has %d inputs", i.Provided, i.Expected)
 }
 
 // Predict predicts the value at the input location. Panics if
