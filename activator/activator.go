@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"errors"
 	"math"
+	"strings"
 )
 
 var NotInPackage = errors.New("NotInPackage")
@@ -12,18 +13,28 @@ type Stringer interface {
 	String() string
 }
 
+// prefix is for marshalling and unmarshalling
+var prefix string = "github.com/btracey/nnet/activator"
+
+// MarshalText marshalls the activators in this package for use with
 func MarshalText(a Activator) (text []byte, err error) {
 	switch a.(type) {
 	default:
 		return nil, NotInPackage
 	case Sigmoid, Linear, Tanh, LinearTanh:
 		s := a.(Stringer)
-		return []byte(s.String()), nil
+		return []byte(prefix + s.String()), nil
 	}
 }
 
 func UnmarshalText(b []byte) (Activator, error) {
 	str := string(b)
+	// See if the string has the prefix
+	if !strings.HasPrefix(str, prefix) {
+		return nil, NotInPackage
+	}
+	// Have the prefix, so cut the string
+	str = str[len(prefix):]
 	switch str {
 	default:
 		return nil, errors.New("String not found")
