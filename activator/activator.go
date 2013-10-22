@@ -12,13 +12,29 @@ type Stringer interface {
 	String() string
 }
 
-func TextMarshal(a Activator) (text []byte, err error) {
+func MarshalText(a Activator) (text []byte, err error) {
 	switch a.(type) {
 	default:
 		return nil, NotInPackage
 	case Sigmoid, Linear, Tanh, LinearTanh:
 		s := a.(Stringer)
 		return []byte(s.String()), nil
+	}
+}
+
+func UnmarshalText(b []byte) (Activator, error) {
+	str := string(b)
+	switch str {
+	default:
+		return nil, errors.New("String not found")
+	case sigmoidString:
+		return Sigmoid{}, nil
+	case linearString:
+		return Linear{}, nil
+	case tanhString:
+		return Tanh{}, nil
+	case linearTanhString:
+		return LinearTanh{}, nil
 	}
 }
 
@@ -53,6 +69,9 @@ type Activator interface {
 // out = 1/(1 + exp(-sum))
 type Sigmoid struct{}
 
+// Here so that if changed, it is in one place here and in the Unmarshal code
+var sigmoidString string = "Sigmoid"
+
 // Activate computes the sigmoid activation function
 func (a Sigmoid) Activate(sum float64) float64 {
 	return 1.0 / (1.0 + math.Exp(-sum))
@@ -65,11 +84,14 @@ func (n Sigmoid) DActivateDCombination(sum, output float64) float64 {
 }
 
 func (a Sigmoid) String() string {
-	return "Sigmoid"
+	return sigmoidString
 }
 
 // Linear neuron has a the identity activation function out = sum
 type Linear struct{}
+
+// Here so that if changed, it is in one place here and in the Unmarshal code
+var linearString string = "Sigmoid"
 
 // Activate computes the linear activation function
 func (a Linear) Activate(sum float64) float64 {
@@ -83,7 +105,7 @@ func (a Linear) DActivateDCombination(sum, output float64) float64 {
 }
 
 func (a Linear) String() string {
-	return "Linear"
+	return linearString
 }
 
 const (
@@ -100,6 +122,9 @@ const (
 // See: http://leon.bottou.org/slides/tricks/tricks.pdf for more description
 type Tanh struct{}
 
+// Here so that if changed, it is in one place here and in the Unmarshal code
+var tanhString string = "Tanh"
+
 // Activate computes the Tanh activation function
 func (a Tanh) Activate(sum float64) float64 {
 	return 1.7159 * math.Tanh(2.0/3.0*sum)
@@ -112,7 +137,7 @@ func (a Tanh) DActivateDCombination(sum, output float64) float64 {
 }
 
 func (a Tanh) String() string {
-	return "Tanh"
+	return tanhString
 }
 
 // Source for linear tanh activation function: http://leon.bottou.org/slides/tricks/tricks.pdf
@@ -122,6 +147,9 @@ func (a Tanh) String() string {
 // See: // See: http://leon.bottou.org/slides/tricks/tricks.pdf for more description
 type LinearTanh struct {
 }
+
+// Here so that if changed, it is in one place here and in the Unmarshal code
+var linearTanhString string = "LinearTanh"
 
 // Activate computes the LinearTanh activation function
 func (a LinearTanh) Activate(sum float64) float64 {
@@ -135,5 +163,5 @@ func (a LinearTanh) DActivateDCombination(sum, output float64) float64 {
 }
 
 func (a LinearTanh) String() string {
-	return "LinearTanh"
+	return linearTanhString
 }
