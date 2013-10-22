@@ -1,6 +1,8 @@
 package activator
 
 import (
+	"bytes"
+	"encoding"
 	"encoding/gob"
 	"errors"
 	"math"
@@ -8,25 +10,33 @@ import (
 )
 
 var NotInPackage = errors.New("NotInPackage")
+var UnmarshallMismatch = errors.New("Unmarshal string mismatch")
 
-type Stringer interface {
-	String() string
-}
-
-// prefix is for marshalling and unmarshalling
+// prefix is for marshalling and unmarshalling. The
 var prefix string = "github.com/btracey/nnet/activator"
 
-// MarshalText marshalls the activators in this package for use with
+// MarshalText marshalls the activators in this package for use with a
+// TextMarshaller. If the activator is not from this package, a
+// NotInPackage error will be returned
 func MarshalText(a Activator) (text []byte, err error) {
+
+	// New types added with this package should be added here.
+	// Types should use prefix while marshalling
 	switch a.(type) {
 	default:
 		return nil, NotInPackage
 	case Sigmoid, Linear, Tanh, LinearTanh:
-		s := a.(Stringer)
-		return []byte(prefix + s.String()), nil
+		t := a.(encoding.TextMarshaler)
+		b, err := t.MarshalText()
+		if err != nil {
+			// Shouldn't ever return an error
+			panic(err)
+		}
+		return b, nil
 	}
 }
 
+//
 func UnmarshalText(b []byte) (Activator, error) {
 	str := string(b)
 	// See if the string has the prefix
@@ -98,6 +108,22 @@ func (a Sigmoid) String() string {
 	return sigmoidString
 }
 
+var sigmoidMarshalBytes []byte = []byte(prefix + sigmoidString)
+
+// MarshalText marshalls the sigmoid into UTF-8 text
+func (a Sigmoid) MarshalText() ([]byte, error) {
+	return sigmoidMarshalBytes, nil
+}
+
+// MarshalText marshalls the sigmoid into UTF-8 text
+func (a *Sigmoid) UnmarshalText(input []byte) error {
+	if !bytes.Equal(input, sigmoidMarshalBytes) {
+		return UnmarshallMismatch
+	}
+	a = &Sigmoid{}
+	return nil
+}
+
 // Linear neuron has a the identity activation function out = sum
 type Linear struct{}
 
@@ -117,6 +143,22 @@ func (a Linear) DActivateDCombination(sum, output float64) float64 {
 
 func (a Linear) String() string {
 	return linearString
+}
+
+var linearMarshalBytes []byte = []byte(prefix + linearString)
+
+// MarshalText marshalls the sigmoid into UTF-8 text
+func (a Linear) MarshalText() ([]byte, error) {
+	return linearMarshalBytes, nil
+}
+
+// MarshalText marshalls the sigmoid into UTF-8 text
+func (a *Linear) UnmarshalText(input []byte) error {
+	if !bytes.Equal(input, linearMarshalBytes) {
+		return UnmarshallMismatch
+	}
+	a = &Linear{}
+	return nil
 }
 
 const (
@@ -151,6 +193,22 @@ func (a Tanh) String() string {
 	return tanhString
 }
 
+var tanhMarshalBytes []byte = []byte(prefix + tanhString)
+
+// MarshalText marshalls the tanh into UTF-8 text
+func (a Tanh) MarshalText() ([]byte, error) {
+	return tanhMarshalBytes, nil
+}
+
+// MarshalText marshalls the tanh into UTF-8 text
+func (a *Tanh) UnmarshalText(input []byte) error {
+	if !bytes.Equal(input, tanhMarshalBytes) {
+		return UnmarshallMismatch
+	}
+	a = &Tanh{}
+	return nil
+}
+
 // Source for linear tanh activation function: http://leon.bottou.org/slides/tricks/tricks.pdf
 
 // LinearTahn is the Tanh activation function plus a small linear term (set to 0.01).
@@ -175,4 +233,20 @@ func (a LinearTanh) DActivateDCombination(sum, output float64) float64 {
 
 func (a LinearTanh) String() string {
 	return linearTanhString
+}
+
+var linearTanhMarshalBytes []byte = []byte(prefix + linearTanhString)
+
+// MarshalText marshalls the linearTanh into UTF-8 text
+func (a LinearTanh) MarshalText() ([]byte, error) {
+	return linearTanhMarshalBytes, nil
+}
+
+// MarshalText marshalls the linearTanh into UTF-8 text
+func (a *LinearTanh) UnmarshalText(input []byte) error {
+	if !bytes.Equal(input, linearTanhMarshalBytes) {
+		return UnmarshallMismatch
+	}
+	a = &LinearTanh{}
+	return nil
 }
