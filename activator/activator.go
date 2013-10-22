@@ -2,9 +2,27 @@ package activator
 
 import (
 	"encoding/gob"
+	"errors"
 	"math"
 )
 
+var NotInPackage = errors.New("NotInPackage")
+
+type Stringer interface {
+	String() string
+}
+
+func TextMarshal(a Activator) (text []byte, err error) {
+	switch a.(type) {
+	default:
+		return nil, NotInPackage
+	case Sigmoid, Linear, Tanh, LinearTanh:
+		s := a.(Stringer)
+		return []byte(s.String()), nil
+	}
+}
+
+// init registers the types so they can be GobEncoded and GobDecoded
 func init() {
 	gob.Register(Sigmoid{})
 	gob.Register(Linear{})
@@ -46,6 +64,10 @@ func (n Sigmoid) DActivateDCombination(sum, output float64) float64 {
 	return output * (1 - output)
 }
 
+func (a Sigmoid) String() string {
+	return "Sigmoid"
+}
+
 // Linear neuron has a the identity activation function out = sum
 type Linear struct{}
 
@@ -58,6 +80,10 @@ func (a Linear) Activate(sum float64) float64 {
 // with respect to the weighted sum
 func (a Linear) DActivateDCombination(sum, output float64) float64 {
 	return 1.0
+}
+
+func (a Linear) String() string {
+	return "Linear"
 }
 
 const (
@@ -85,6 +111,10 @@ func (a Tanh) DActivateDCombination(sum, output float64) float64 {
 	return TanhDerivConst * (1.0 - math.Tanh(TwoThirds*sum)*math.Tanh(TwoThirds*sum))
 }
 
+func (a Tanh) String() string {
+	return "Tanh"
+}
+
 // Source for linear tanh activation function: http://leon.bottou.org/slides/tricks/tricks.pdf
 
 // LinearTahn is the Tanh activation function plus a small linear term (set to 0.01).
@@ -102,4 +132,8 @@ func (a LinearTanh) Activate(sum float64) float64 {
 // with respect to the weighted sum
 func (a LinearTanh) DActivateDCombination(sum, output float64) float64 {
 	return TanhDerivConst*(1.0-math.Tanh(TwoThirds*sum)*math.Tanh(TwoThirds*sum)) + 0.01
+}
+
+func (a LinearTanh) String() string {
+	return "LinearTanh"
 }
