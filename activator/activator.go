@@ -3,9 +3,8 @@ package activator
 import (
 	"encoding/gob"
 	"encoding/json"
-	"errors"
+	"github.com/btracey/nnet/common"
 	"math"
-	//"strings"
 )
 
 // init registers the types so they can be GobEncoded and GobDecoded
@@ -27,7 +26,7 @@ func MarshalJSON(a Activator) ([]byte, error) {
 	// Types should use prefix while marshalling
 	switch a.(type) {
 	default:
-		return nil, NotInPackage
+		return nil, common.NotInPackage
 	case Sigmoid, Linear, Tanh, LinearTanh:
 		t := a.(json.Marshaler)
 		return t.MarshalJSON()
@@ -52,7 +51,7 @@ func UnmarshalJSON(b []byte) (Activator, error) {
 	case linearTanhMarshalString:
 		return LinearTanh{}, nil
 	default:
-		return nil, NotInPackage
+		return nil, common.NotInPackage
 	}
 }
 
@@ -107,7 +106,7 @@ func (a *Sigmoid) UnmarshalJSON(input []byte) error {
 	var str string
 	json.Unmarshal(input, &str)
 	if str != sigmoidMarshalString {
-		return UnmarshalMismatch{Expected: sigmoidMarshalString, Received: str}
+		return common.UnmarshalMismatch{Expected: sigmoidMarshalString, Received: str}
 	}
 	a = &Sigmoid{}
 	return nil
@@ -146,7 +145,7 @@ func (a *Linear) UnmarshalJSON(input []byte) error {
 	var str string
 	json.Unmarshal(input, &str)
 	if str != linearMarshalString {
-		return UnmarshalMismatch{Expected: linearMarshalString, Received: str}
+		return common.UnmarshalMismatch{Expected: linearMarshalString, Received: str}
 	}
 	a = &Linear{}
 	return nil
@@ -196,7 +195,7 @@ func (a *Tanh) UnmarshalJSON(input []byte) error {
 	var str string
 	json.Unmarshal(input, &str)
 	if str != tanhMarshalString {
-		return UnmarshalMismatch{Expected: tanhMarshalString, Received: str}
+		return common.UnmarshalMismatch{Expected: tanhMarshalString, Received: str}
 	}
 	a = &Tanh{}
 	return nil
@@ -240,7 +239,7 @@ func (a *LinearTanh) UnmarshalJSON(input []byte) error {
 	var str string
 	json.Unmarshal(input, &str)
 	if str != linearTanhMarshalString {
-		return UnmarshalMismatch{Expected: linearTanhMarshalString, Received: str}
+		return common.UnmarshalMismatch{Expected: linearTanhMarshalString, Received: str}
 	}
 	a = &LinearTanh{}
 	return nil

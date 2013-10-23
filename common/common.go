@@ -1,5 +1,9 @@
 package common
 
+import (
+	"errors"
+)
+
 // NotInPackage is an error which signifies the type is
 // not in the package. Normally used with marshaling and
 // unmarshaling
