@@ -80,13 +80,13 @@ func (net *Net) GobEncode() ([]byte, error) {
 // Save the net to a string file (for reading in to non-go programs for example). If custom
 // interfaces are used, they will be marshaled with custom and if the custom type is a text
 // marshaller it will write
-func (net *Net) TextMarshaler() (text []byte, err error) {
+func (net *Net) MarshalJSON() (text []byte, err error) {
 	//b := make([]byte, 0, 1000)
 
 }
 
 // TextUnmarshaler
-func (net *Net) TextUnmarshaler(text []byte) error {
+func (net *Net) MarshalJSON(text []byte) error {
 
 }
 

@@ -59,6 +59,12 @@ func UnmarshalJSON(b []byte) (Activator, error) {
 	switch str {
 	case sigmoidMarshalString:
 		return Sigmoid{}, nil
+	case linearMarshalString:
+		return Linear{}, nil
+	case tanhMarshalString:
+		return Tanh{}, nil
+	case tanhMarshalString:
+		return LinearTanh{}, nil
 	default:
 		return nil, NotInPackage
 	}
@@ -144,7 +150,23 @@ func (a Linear) String() string {
 	return linearString
 }
 
-var linearMarshalBytes []byte = []byte(prefix + linearString)
+var linearMarshalString string = prefix + linearString
+
+// MarshalText marshalls the linear into UTF-8 text
+func (a Linear) MarshalJSON() ([]byte, error) {
+	return json.Marshal(linearMarshalString)
+}
+
+// MarshalText marshalls the linear into UTF-8 text
+func (a *Linear) UnmarshalJSON(input []byte) error {
+	var str string
+	json.Unmarshal(input, &str)
+	if str != linearMarshalString {
+		return UnmarshalMismatch{Expected: linearMarshalString, Received: str}
+	}
+	a = &Linear{}
+	return nil
+}
 
 const (
 	// http://www.wolframalpha.com/input/?i=1.7159+*+2%2F3
@@ -178,7 +200,23 @@ func (a Tanh) String() string {
 	return tanhString
 }
 
-var tanhMarshalBytes []byte = []byte(prefix + tanhString)
+var tanhMarshalString string = prefix + tanhString
+
+// MarshalText marshalls the tanh into UTF-8 text
+func (a Tanh) MarshalJSON() ([]byte, error) {
+	return json.Marshal(tanhMarshalString)
+}
+
+// MarshalText marshalls the tanh into UTF-8 text
+func (a *Tanh) UnmarshalJSON(input []byte) error {
+	var str string
+	json.Unmarshal(input, &str)
+	if str != tanhMarshalString {
+		return UnmarshalMismatch{Expected: tanhMarshalString, Received: str}
+	}
+	a = &Tanh{}
+	return nil
+}
 
 // Source for linear tanh activation function: http://leon.bottou.org/slides/tricks/tricks.pdf
 
@@ -206,4 +244,20 @@ func (a LinearTanh) String() string {
 	return linearTanhString
 }
 
-var linearTanhMarshalBytes []byte = []byte(prefix + linearTanhString)
+var linearTanhMarshalString string = prefix + linearTanhString
+
+// MarshalText marshalls the linearSigmoid into UTF-8 text
+func (a LinearTanh) MarshalJSON() ([]byte, error) {
+	return json.Marshal(linearTanhMarshalString)
+}
+
+// MarshalText marshalls the linearSigmoid into UTF-8 text
+func (a *LinearTanh) UnmarshalJSON(input []byte) error {
+	var str string
+	json.Unmarshal(input, &str)
+	if str != linearTanhMarshalString {
+		return UnmarshalMismatch{Expected: linearTanhMarshalString, Received: str}
+	}
+	a = &LinearTanh{}
+	return nil
+}
