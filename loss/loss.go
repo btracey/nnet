@@ -2,6 +2,9 @@ package loss
 
 import (
 	"encoding/gob"
+	"encoding/json"
+	"errors"
+	"github.com/btracey/nnet/common"
 	"math"
 )
 
@@ -15,14 +18,14 @@ func init() {
 // MarshalText marshalls the activators in this package for use with a
 // TextMarshaller. If the activator is not from this package, a
 // NotInPackage error will be returned
-func MarshalJSON(a Activator) ([]byte, error) {
+func MarshalJSON(l Losser) ([]byte, error) {
 	// New types added with this package should be added here.
 	// Types should use prefix while marshalling
-	switch a.(type) {
+	switch l.(type) {
 	default:
 		return nil, NotInPackage
-	case Sigmoid, Linear, Tanh, LinearTanh:
-		t := a.(json.Marshaler)
+	case SquaredDistance, ManhattanDistance, RelativeSquared, LogSquared:
+		t := l.(json.Marshaler)
 		return t.MarshalJSON()
 	}
 }
@@ -30,22 +33,24 @@ func MarshalJSON(a Activator) ([]byte, error) {
 // UnmarshalText returns a package activator from the string.
 // If the string does not match any of the types in the package,
 // then a "NotInPackage" error is returned
-func UnmarshalJSON(b []byte) (Activator, error) {
+func UnmarshalJSON(b []byte) (Losser, error) {
 	tmp := string(b)
 	// Remove quotations
 	str := tmp[len("\"") : len(tmp)-len("\"")]
 
+	// TODO: Add in something about relative squared
+
 	switch str {
-	case sigmoidMarshalString:
-		return Sigmoid{}, nil
-	case linearMarshalString:
-		return Linear{}, nil
-	case tanhMarshalString:
-		return Tanh{}, nil
-	case linearTanhMarshalString:
-		return LinearTanh{}, nil
+	case sqDistString:
+		return SquaredDistance{}, nil
+	case manhatDistString:
+		return ManhattanDistance{}, nil
+	//case relSqString:
+	//	return RelativeSquared{}, nil
+	case logSqString:
+		return LogSquared{}, nil
 	default:
-		return nil, NotInPackage
+		return nil, common.NotInPackage
 	}
 }
 
@@ -85,6 +90,22 @@ func (l SquaredDistance) LossAndDeriv(prediction, truth, derivative []float64) (
 		derivative[i] /= float64(len(prediction)) / 2
 	}
 	return loss
+}
+
+// MarshalJSON marshals the sigmoid into UTF-8 text
+func (a SquaredDistance) MarshalJSON() ([]byte, error) {
+	return json.Marshal(sigmoidMarshalString)
+}
+
+// MarshalJSON marshals the sigmoid into UTF-8 text
+func (a *SquaredDistance) UnmarshalJSON(input []byte) error {
+	var str string
+	json.Unmarshal(input, &str)
+	if str != sigmoidMarshalString {
+		return common.UnmarshalMismatch{Expected: sigmoidMarshalString, Received: str}
+	}
+	a = &SquaredDistance{}
+	return nil
 }
 
 var manhatDistString string = "ManhattanDistance"

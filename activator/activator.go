@@ -18,6 +18,9 @@ func init() {
 // prefix is for marshalling and unmarshalling. The
 var prefix string = "github.com/btracey/nnet/activator/"
 
+//
+type marshalName struct{ Name string }
+
 // MarshalText marshalls the activators in this package for use with a
 // TextMarshaller. If the activator is not from this package, a
 // NotInPackage error will be returned
@@ -37,11 +40,10 @@ func MarshalJSON(a Activator) ([]byte, error) {
 // If the string does not match any of the types in the package,
 // then a "NotInPackage" error is returned
 func UnmarshalJSON(b []byte) (Activator, error) {
-	tmp := string(b)
-	// Remove quotations
-	str := tmp[len("\"") : len(tmp)-len("\"")]
 
-	switch str {
+	name := &marshalName{}
+	json.Unmarshal(b, name)
+	switch name.Name {
 	case sigmoidMarshalString:
 		return Sigmoid{}, nil
 	case linearMarshalString:
@@ -96,17 +98,17 @@ func (a Sigmoid) String() string {
 
 var sigmoidMarshalString string = prefix + sigmoidString
 
-// MarshalText marshalls the sigmoid into UTF-8 text
+// MarshalJSON marshalls the sigmoid into UTF-8 text
 func (a Sigmoid) MarshalJSON() ([]byte, error) {
-	return json.Marshal(sigmoidMarshalString)
+	return json.Marshal(marshalName{Name: sigmoidMarshalString})
 }
 
-// MarshalText marshalls the sigmoid into UTF-8 text
+// MarshalJSON marshalls the sigmoid into UTF-8 text
 func (a *Sigmoid) UnmarshalJSON(input []byte) error {
-	var str string
-	json.Unmarshal(input, &str)
-	if str != sigmoidMarshalString {
-		return common.UnmarshalMismatch{Expected: sigmoidMarshalString, Received: str}
+	s := &marshalName{}
+	json.Unmarshal(input, &s)
+	if s.Name != sigmoidMarshalString {
+		return common.UnmarshalMismatch{Expected: sigmoidMarshalString, Received: s.Name}
 	}
 	a = &Sigmoid{}
 	return nil
@@ -135,17 +137,17 @@ func (a Linear) String() string {
 
 var linearMarshalString string = prefix + linearString
 
-// MarshalText marshalls the linear into UTF-8 text
+// MarshalJSON marshalls the sigmoid into UTF-8 text
 func (a Linear) MarshalJSON() ([]byte, error) {
-	return json.Marshal(linearMarshalString)
+	return json.Marshal(marshalName{Name: linearMarshalString})
 }
 
-// MarshalText marshalls the linear into UTF-8 text
+// MarshalJSON marshalls the sigmoid into UTF-8 text
 func (a *Linear) UnmarshalJSON(input []byte) error {
-	var str string
-	json.Unmarshal(input, &str)
-	if str != linearMarshalString {
-		return common.UnmarshalMismatch{Expected: linearMarshalString, Received: str}
+	s := &marshalName{}
+	json.Unmarshal(input, &s)
+	if s.Name != linearMarshalString {
+		return common.UnmarshalMismatch{Expected: linearMarshalString, Received: s.Name}
 	}
 	a = &Linear{}
 	return nil
@@ -185,12 +187,12 @@ func (a Tanh) String() string {
 
 var tanhMarshalString string = prefix + tanhString
 
-// MarshalText marshalls the tanh into UTF-8 text
+// MarshalJSON marshalls the tanh into UTF-8 text
 func (a Tanh) MarshalJSON() ([]byte, error) {
 	return json.Marshal(tanhMarshalString)
 }
 
-// MarshalText marshalls the tanh into UTF-8 text
+// MarshalJSON marshalls the tanh into UTF-8 text
 func (a *Tanh) UnmarshalJSON(input []byte) error {
 	var str string
 	json.Unmarshal(input, &str)
@@ -229,12 +231,12 @@ func (a LinearTanh) String() string {
 
 var linearTanhMarshalString string = prefix + linearTanhString
 
-// MarshalText marshalls the linearSigmoid into UTF-8 text
+// MarshalJSON marshalls the linearSigmoid into UTF-8 text
 func (a LinearTanh) MarshalJSON() ([]byte, error) {
 	return json.Marshal(linearTanhMarshalString)
 }
 
-// MarshalText marshalls the linearSigmoid into UTF-8 text
+// MarshalJSON marshalls the linearSigmoid into UTF-8 text
 func (a *LinearTanh) UnmarshalJSON(input []byte) error {
 	var str string
 	json.Unmarshal(input, &str)

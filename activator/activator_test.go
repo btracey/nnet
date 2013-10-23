@@ -36,11 +36,11 @@ func TestSigmoid(t *testing.T) {
 	}
 	b, err = MarshalJSON(s)
 	if err != nil {
-		t.Errorf("Error package marshaling ")
+		t.Errorf("Error package marshaling: " + err.Error())
 	}
 	activator, err := UnmarshalJSON(b)
 	if err != nil {
-		t.Errorf("Error package unmarshalling")
+		t.Errorf("Error package unmarshalling: " + err.Error())
 	}
 	_, ok := activator.(Sigmoid)
 	if !ok {
@@ -84,6 +84,7 @@ func TestLinear(t *testing.T) {
 	if !ok {
 		t.Errorf("Wrong type from package unmarshaling. %#v", activator)
 	}
+
 }
 
 func TestTanh(t *testing.T) {
