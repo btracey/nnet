@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"math"
-	"strings"
+	//"strings"
 )
 
 // init registers the types so they can be GobEncoded and GobDecoded
@@ -21,10 +21,17 @@ func init() {
 var NotInPackage = errors.New("NotInPackage")
 
 //
-var UnmarshalMismatch = errors.New("Unmarshal string mismatch")
+type UnmarshalMismatch struct {
+	Expected string
+	Received string
+}
+
+func (u UnmarshalMismatch) Error() string {
+	return "Unmarshal string mismatch. Expected: " + u.Expected + " Received: " + u.Received
+}
 
 // prefix is for marshalling and unmarshalling. The
-var prefix string = "github.com/btracey/nnet/activator"
+var prefix string = "github.com/btracey/nnet/activator/"
 
 // MarshalText marshalls the activators in this package for use with a
 // TextMarshaller. If the activator is not from this package, a
@@ -45,25 +52,16 @@ func MarshalJSON(a Activator) ([]byte, error) {
 // If the string does not match any of the types in the package,
 // then a "NotInPackage" error is returned
 func UnmarshalJSON(b []byte) (Activator, error) {
-	str := string(b)
-	// See if the string has the prefix
-	if !strings.HasPrefix(str, prefix) {
-		return nil, NotInPackage
-	}
-	// Have the prefix, so cut the string
-	str = str[len(prefix):]
-	switch str {
-	default:
-		return nil, errors.New("String not found")
-	case sigmoidString:
+	// Test one by one. Probably a better way to do this, but
+	// it would be nice to have one that's robust to new
+	// encoding and decoding
+
+	err := (&Sigmoid{}).UnmarshalJSON(b)
+	if err == nil {
 		return Sigmoid{}, nil
-	case linearString:
-		return Linear{}, nil
-	case tanhString:
-		return Tanh{}, nil
-	case linearTanhString:
-		return LinearTanh{}, nil
 	}
+
+	return nil, NotInPackage
 }
 
 // A set of built-in Activator types
@@ -115,9 +113,11 @@ func (a Sigmoid) MarshalJSON() ([]byte, error) {
 }
 
 // MarshalText marshalls the sigmoid into UTF-8 text
-func (a *Sigmoid) UnmarshalText(input []byte) error {
-	if string(input) != sigmoidMarshalString {
-		return UnmarshalMismatch
+func (a *Sigmoid) UnmarshalJSON(input []byte) error {
+	var str string
+	json.Unmarshal(input, &str)
+	if str != sigmoidMarshalString {
+		return UnmarshalMismatch{Expected: sigmoidMarshalString, Received: str}
 	}
 	a = &Sigmoid{}
 	return nil

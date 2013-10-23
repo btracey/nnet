@@ -23,6 +23,31 @@ func TestSigmoid(t *testing.T) {
 	if math.Abs(deriv-float64(trueDeriv)) > 1E-15 {
 		t.Errorf("Derivative does not match. %v expected, %v found", trueDeriv, deriv)
 	}
+
+	// Test Marshal and Unmarshal
+	b, err := s.MarshalJSON()
+	if err != nil {
+		t.Errorf("Error marshaling")
+	}
+	n := &Sigmoid{}
+	err = n.UnmarshalJSON(b)
+	if err != nil {
+		t.Errorf("Error unmarshaling: " + err.Error() + ". Marshaled text was: " + string(b))
+	}
+
+	// Test Marshaling and Unmarshaling from package functions
+	b, err = MarshalJSON(s)
+	if err != nil {
+		t.Errorf("Error package marshaling ")
+	}
+	activator, err := UnmarshalJSON(b)
+	if err != nil {
+		t.Errorf("Error package unmarshalling")
+	}
+	_, ok := activator.(Sigmoid)
+	if !ok {
+		t.Errorf("Wrong type from package unmarshaling")
+	}
 }
 
 func TestLinear(t *testing.T) {
@@ -52,7 +77,7 @@ func TestTanh(t *testing.T) {
 	if math.Abs(output-float64(trueOut)) > 1E-15 {
 		t.Errorf("Activation output does not match. %v expected, %v found", trueOut, output)
 	}
-	deriv := s.DActivateDSum(sum, output)
+	deriv := s.DActivateDCombination(sum, output)
 	if math.Abs(deriv-float64(trueDeriv)) > 1E-15 {
 		t.Errorf("Derivative does not match. %v expected, %v found", trueDeriv, deriv)
 	}
@@ -70,7 +95,7 @@ func TestLinearTanh(t *testing.T) {
 	if math.Abs(output-float64(trueOut)) > 1E-15 {
 		t.Errorf("Activation output does not match. %v expected, %v found", trueOut, output)
 	}
-	deriv := s.DActivateDSum(sum, output)
+	deriv := s.DActivateDCombination(sum, output)
 	if math.Abs(deriv-float64(trueDeriv)) > 1E-15 {
 		t.Errorf("Derivative does not match. %v expected, %v found", trueDeriv, deriv)
 	}
