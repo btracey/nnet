@@ -12,6 +12,43 @@ func init() {
 	gob.Register(LogSquared{})
 }
 
+// MarshalText marshalls the activators in this package for use with a
+// TextMarshaller. If the activator is not from this package, a
+// NotInPackage error will be returned
+func MarshalJSON(a Activator) ([]byte, error) {
+	// New types added with this package should be added here.
+	// Types should use prefix while marshalling
+	switch a.(type) {
+	default:
+		return nil, NotInPackage
+	case Sigmoid, Linear, Tanh, LinearTanh:
+		t := a.(json.Marshaler)
+		return t.MarshalJSON()
+	}
+}
+
+// UnmarshalText returns a package activator from the string.
+// If the string does not match any of the types in the package,
+// then a "NotInPackage" error is returned
+func UnmarshalJSON(b []byte) (Activator, error) {
+	tmp := string(b)
+	// Remove quotations
+	str := tmp[len("\"") : len(tmp)-len("\"")]
+
+	switch str {
+	case sigmoidMarshalString:
+		return Sigmoid{}, nil
+	case linearMarshalString:
+		return Linear{}, nil
+	case tanhMarshalString:
+		return Tanh{}, nil
+	case linearTanhMarshalString:
+		return LinearTanh{}, nil
+	default:
+		return nil, NotInPackage
+	}
+}
+
 var NotInPackage = errors.New("NotInPackage")
 var UnmarshallMismatch = errors.New("Unmarshal string mismatch")
 
@@ -30,6 +67,8 @@ type Losser interface {
 	LossAndDeriv(prediction []float64, truth []float64, derivative []float64) float64
 }
 
+var sqDistString string = "SquaredDistance"
+
 // SquaredDistance is the same as the two-norm of (truth - pred) divided by the length
 type SquaredDistance struct{}
 
@@ -47,6 +86,8 @@ func (l SquaredDistance) LossAndDeriv(prediction, truth, derivative []float64) (
 	}
 	return loss
 }
+
+var manhatDistString string = "ManhattanDistance"
 
 // Manhattan distance is the same as the one-norm of (truth - pred)
 type ManhattanDistance struct{}
@@ -68,6 +109,8 @@ func (m ManhattanDistance) LossAndDeriv(prediction, truth, derivative []float64)
 	return loss
 }
 
+var relSqString string = "RelativeSquared"
+
 // Relative squared is the relative error with the value of RelativeSquared added in the denominator
 type RelativeSquared float64
 
@@ -85,6 +128,8 @@ func (r RelativeSquared) LossAndDeriv(prediction, truth, derivative []float64) (
 	loss /= nSamples
 	return loss
 }
+
+var logSqString string = "LogSquared"
 
 // LogSquared uses log(1 + diff*diff) so that really high losses aren't as important
 type LogSquared struct{}

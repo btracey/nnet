@@ -16,20 +16,6 @@ func init() {
 	gob.Register(LinearTanh{})
 }
 
-// NotInPackage is an error which signifies the activator is
-// not in the package
-var NotInPackage = errors.New("NotInPackage")
-
-//
-type UnmarshalMismatch struct {
-	Expected string
-	Received string
-}
-
-func (u UnmarshalMismatch) Error() string {
-	return "Unmarshal string mismatch. Expected: " + u.Expected + " Received: " + u.Received
-}
-
 // prefix is for marshalling and unmarshalling. The
 var prefix string = "github.com/btracey/nnet/activator/"
 
@@ -82,8 +68,6 @@ func UnmarshalJSON(b []byte) (Activator, error) {
 // the weighted sum itself and the output of Activate. This complication
 // arises from the fact that some derivatives are significantly easier
 // to compute given one value or the other.
-//
-// GobDecode functions exist to allow easy saving
 type Activator interface {
 	Activate(sum float64) float64
 	DActivateDCombination(sum float64, output float64) float64
