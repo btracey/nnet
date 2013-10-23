@@ -12,6 +12,12 @@ func init() {
 	gob.Register(LogSquared{})
 }
 
+var NotInPackage = errors.New("NotInPackage")
+var UnmarshallMismatch = errors.New("Unmarshal string mismatch")
+
+// prefix is for marshalling and unmarshalling. The
+var prefix string = "github.com/btracey/nnet/loss"
+
 // Losser is an interface for a loss function. It takes in three inputs
 // 1) the predicted input value
 // 2) the true value

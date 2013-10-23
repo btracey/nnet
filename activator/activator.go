@@ -1,16 +1,27 @@
 package activator
 
 import (
-	"bytes"
-	"encoding"
 	"encoding/gob"
+	"encoding/json"
 	"errors"
 	"math"
 	"strings"
 )
 
+// init registers the types so they can be GobEncoded and GobDecoded
+func init() {
+	gob.Register(Sigmoid{})
+	gob.Register(Linear{})
+	gob.Register(Tanh{})
+	gob.Register(LinearTanh{})
+}
+
+// NotInPackage is an error which signifies the activator is
+// not in the package
 var NotInPackage = errors.New("NotInPackage")
-var UnmarshallMismatch = errors.New("Unmarshal string mismatch")
+
+//
+var UnmarshalMismatch = errors.New("Unmarshal string mismatch")
 
 // prefix is for marshalling and unmarshalling. The
 var prefix string = "github.com/btracey/nnet/activator"
@@ -18,26 +29,22 @@ var prefix string = "github.com/btracey/nnet/activator"
 // MarshalText marshalls the activators in this package for use with a
 // TextMarshaller. If the activator is not from this package, a
 // NotInPackage error will be returned
-func MarshalText(a Activator) (text []byte, err error) {
-
+func MarshalJSON(a Activator) ([]byte, error) {
 	// New types added with this package should be added here.
 	// Types should use prefix while marshalling
 	switch a.(type) {
 	default:
 		return nil, NotInPackage
 	case Sigmoid, Linear, Tanh, LinearTanh:
-		t := a.(encoding.TextMarshaler)
-		b, err := t.MarshalText()
-		if err != nil {
-			// Shouldn't ever return an error
-			panic(err)
-		}
-		return b, nil
+		t := a.(json.Marshaler)
+		return t.MarshalJSON()
 	}
 }
 
-//
-func UnmarshalText(b []byte) (Activator, error) {
+// UnmarshalText returns a package activator from the string.
+// If the string does not match any of the types in the package,
+// then a "NotInPackage" error is returned
+func UnmarshalJSON(b []byte) (Activator, error) {
 	str := string(b)
 	// See if the string has the prefix
 	if !strings.HasPrefix(str, prefix) {
@@ -57,14 +64,6 @@ func UnmarshalText(b []byte) (Activator, error) {
 	case linearTanhString:
 		return LinearTanh{}, nil
 	}
-}
-
-// init registers the types so they can be GobEncoded and GobDecoded
-func init() {
-	gob.Register(Sigmoid{})
-	gob.Register(Linear{})
-	gob.Register(Tanh{})
-	gob.Register(LinearTanh{})
 }
 
 // A set of built-in Activator types
@@ -108,17 +107,17 @@ func (a Sigmoid) String() string {
 	return sigmoidString
 }
 
-var sigmoidMarshalBytes []byte = []byte(prefix + sigmoidString)
+var sigmoidMarshalString string = prefix + sigmoidString
 
 // MarshalText marshalls the sigmoid into UTF-8 text
-func (a Sigmoid) MarshalText() ([]byte, error) {
-	return sigmoidMarshalBytes, nil
+func (a Sigmoid) MarshalJSON() ([]byte, error) {
+	return json.Marshal(sigmoidMarshalString)
 }
 
 // MarshalText marshalls the sigmoid into UTF-8 text
 func (a *Sigmoid) UnmarshalText(input []byte) error {
-	if !bytes.Equal(input, sigmoidMarshalBytes) {
-		return UnmarshallMismatch
+	if string(input) != sigmoidMarshalString {
+		return UnmarshalMismatch
 	}
 	a = &Sigmoid{}
 	return nil
@@ -146,20 +145,6 @@ func (a Linear) String() string {
 }
 
 var linearMarshalBytes []byte = []byte(prefix + linearString)
-
-// MarshalText marshalls the sigmoid into UTF-8 text
-func (a Linear) MarshalText() ([]byte, error) {
-	return linearMarshalBytes, nil
-}
-
-// MarshalText marshalls the sigmoid into UTF-8 text
-func (a *Linear) UnmarshalText(input []byte) error {
-	if !bytes.Equal(input, linearMarshalBytes) {
-		return UnmarshallMismatch
-	}
-	a = &Linear{}
-	return nil
-}
 
 const (
 	// http://www.wolframalpha.com/input/?i=1.7159+*+2%2F3
@@ -195,20 +180,6 @@ func (a Tanh) String() string {
 
 var tanhMarshalBytes []byte = []byte(prefix + tanhString)
 
-// MarshalText marshalls the tanh into UTF-8 text
-func (a Tanh) MarshalText() ([]byte, error) {
-	return tanhMarshalBytes, nil
-}
-
-// MarshalText marshalls the tanh into UTF-8 text
-func (a *Tanh) UnmarshalText(input []byte) error {
-	if !bytes.Equal(input, tanhMarshalBytes) {
-		return UnmarshallMismatch
-	}
-	a = &Tanh{}
-	return nil
-}
-
 // Source for linear tanh activation function: http://leon.bottou.org/slides/tricks/tricks.pdf
 
 // LinearTahn is the Tanh activation function plus a small linear term (set to 0.01).
@@ -236,17 +207,3 @@ func (a LinearTanh) String() string {
 }
 
 var linearTanhMarshalBytes []byte = []byte(prefix + linearTanhString)
-
-// MarshalText marshalls the linearTanh into UTF-8 text
-func (a LinearTanh) MarshalText() ([]byte, error) {
-	return linearTanhMarshalBytes, nil
-}
-
-// MarshalText marshalls the linearTanh into UTF-8 text
-func (a *LinearTanh) UnmarshalText(input []byte) error {
-	if !bytes.Equal(input, linearTanhMarshalBytes) {
-		return UnmarshallMismatch
-	}
-	a = &LinearTanh{}
-	return nil
-}
