@@ -63,7 +63,7 @@ func UnmarshalJSON(b []byte) (Activator, error) {
 		return Linear{}, nil
 	case tanhMarshalString:
 		return Tanh{}, nil
-	case tanhMarshalString:
+	case linearTanhMarshalString:
 		return LinearTanh{}, nil
 	default:
 		return nil, NotInPackage
@@ -133,7 +133,7 @@ func (a *Sigmoid) UnmarshalJSON(input []byte) error {
 type Linear struct{}
 
 // Here so that if changed, it is in one place here and in the Unmarshal code
-var linearString string = "Sigmoid"
+var linearString string = "Linear"
 
 // Activate computes the linear activation function
 func (a Linear) Activate(sum float64) float64 {

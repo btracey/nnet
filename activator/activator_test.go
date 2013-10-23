@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// Test to make sure the activator functions work as they should
+// TODO: Add better tests for JSON
 
 func TestSigmoid(t *testing.T) {
 	s := Sigmoid{}
@@ -24,7 +24,7 @@ func TestSigmoid(t *testing.T) {
 		t.Errorf("Derivative does not match. %v expected, %v found", trueDeriv, deriv)
 	}
 
-	// Test Marshal and Unmarshal
+	// Test Marshaling and Unmarshaling from package functions
 	b, err := s.MarshalJSON()
 	if err != nil {
 		t.Errorf("Error marshaling")
@@ -34,8 +34,6 @@ func TestSigmoid(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error unmarshaling: " + err.Error() + ". Marshaled text was: " + string(b))
 	}
-
-	// Test Marshaling and Unmarshaling from package functions
 	b, err = MarshalJSON(s)
 	if err != nil {
 		t.Errorf("Error package marshaling ")
@@ -62,6 +60,29 @@ func TestLinear(t *testing.T) {
 	deriv := s.DActivateDCombination(sum, output)
 	if math.Abs(deriv-trueDeriv) > 1E-15 {
 		t.Errorf("Derivative does not match. %v expected, %v found", trueDeriv, deriv)
+	}
+
+	// Test Marshaling and Unmarshaling from package functions
+	b, err := s.MarshalJSON()
+	if err != nil {
+		t.Errorf("Error marshaling")
+	}
+	n := &Linear{}
+	err = n.UnmarshalJSON(b)
+	if err != nil {
+		t.Errorf("Error unmarshaling: " + err.Error() + ". Marshaled text was: " + string(b))
+	}
+	b, err = MarshalJSON(s)
+	if err != nil {
+		t.Errorf("Error package marshaling ")
+	}
+	activator, err := UnmarshalJSON(b)
+	if err != nil {
+		t.Errorf("Error package unmarshalling")
+	}
+	_, ok := activator.(Linear)
+	if !ok {
+		t.Errorf("Wrong type from package unmarshaling. %#v", activator)
 	}
 }
 
