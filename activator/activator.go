@@ -52,16 +52,16 @@ func MarshalJSON(a Activator) ([]byte, error) {
 // If the string does not match any of the types in the package,
 // then a "NotInPackage" error is returned
 func UnmarshalJSON(b []byte) (Activator, error) {
-	// Test one by one. Probably a better way to do this, but
-	// it would be nice to have one that's robust to new
-	// encoding and decoding
+	tmp := string(b)
+	// Remove quotations
+	str := tmp[len("\"") : len(tmp)-len("\"")]
 
-	err := (&Sigmoid{}).UnmarshalJSON(b)
-	if err == nil {
+	switch str {
+	case sigmoidMarshalString:
 		return Sigmoid{}, nil
+	default:
+		return nil, NotInPackage
 	}
-
-	return nil, NotInPackage
 }
 
 // A set of built-in Activator types
