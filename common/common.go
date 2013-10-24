@@ -51,7 +51,7 @@ type valueUnmarshaler struct {
 }
 
 func (i *InterfaceMarshaler) MarshalJSON() ([]byte, error) {
-	fmt.Println(i.Value)
+	// Need to get the type of the value, not the pointer to the value
 	inter := interfaceMarshaler{
 		PkgPath: reflect.ValueOf(i.Value).Elem().Type().PkgPath(),
 		Name:    reflect.ValueOf(i.Value).Elem().Type().Name(),
