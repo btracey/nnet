@@ -3,7 +3,6 @@ package loss
 import (
 	"encoding/gob"
 	"encoding/json"
-	"errors"
 	"github.com/btracey/nnet/common"
 	"math"
 )
@@ -23,7 +22,7 @@ func MarshalJSON(l Losser) ([]byte, error) {
 	// Types should use prefix while marshalling
 	switch l.(type) {
 	default:
-		return nil, NotInPackage
+		return nil, common.NotInPackage
 	case SquaredDistance, ManhattanDistance, RelativeSquared, LogSquared:
 		t := l.(json.Marshaler)
 		return t.MarshalJSON()
@@ -34,19 +33,20 @@ func MarshalJSON(l Losser) ([]byte, error) {
 // If the string does not match any of the types in the package,
 // then a "NotInPackage" error is returned
 func UnmarshalJSON(b []byte) (Losser, error) {
-	tmp := string(b)
-	// Remove quotations
-	str := tmp[len("\"") : len(tmp)-len("\"")]
 
-	// TODO: Add in something about relative squared
+	name := &marshalName{}
+	json.Unmarshal(b, name)
 
-	switch str {
+	switch name.Name {
 	case sqDistString:
 		return SquaredDistance{}, nil
 	case manhatDistString:
 		return ManhattanDistance{}, nil
-	//case relSqString:
-	//	return RelativeSquared{}, nil
+	case relSqString:
+		// Unmarshal floating point value
+		var r RelativeSquared
+		(&r).UnmarshalJSON(b)
+		return r, nil
 	case logSqString:
 		return LogSquared{}, nil
 	default:
@@ -54,8 +54,7 @@ func UnmarshalJSON(b []byte) (Losser, error) {
 	}
 }
 
-var NotInPackage = errors.New("NotInPackage")
-var UnmarshallMismatch = errors.New("Unmarshal string mismatch")
+type marshalName struct{ Name string }
 
 // prefix is for marshalling and unmarshalling. The
 var prefix string = "github.com/btracey/nnet/loss"
@@ -92,17 +91,17 @@ func (l SquaredDistance) LossAndDeriv(prediction, truth, derivative []float64) (
 	return loss
 }
 
-// MarshalJSON marshals the sigmoid into UTF-8 text
+// MarshalJSON marshalls the sigmoid into UTF-8 text
 func (a SquaredDistance) MarshalJSON() ([]byte, error) {
-	return json.Marshal(sigmoidMarshalString)
+	return json.Marshal(marshalName{Name: sqDistString})
 }
 
-// MarshalJSON marshals the sigmoid into UTF-8 text
+// MarshalJSON marshalls the sigmoid into UTF-8 text
 func (a *SquaredDistance) UnmarshalJSON(input []byte) error {
-	var str string
-	json.Unmarshal(input, &str)
-	if str != sigmoidMarshalString {
-		return common.UnmarshalMismatch{Expected: sigmoidMarshalString, Received: str}
+	s := &marshalName{}
+	json.Unmarshal(input, &s)
+	if s.Name != sqDistString {
+		return common.UnmarshalMismatch{Expected: sqDistString, Received: s.Name}
 	}
 	a = &SquaredDistance{}
 	return nil
@@ -130,7 +129,28 @@ func (m ManhattanDistance) LossAndDeriv(prediction, truth, derivative []float64)
 	return loss
 }
 
+// MarshalJSON marshalls the sigmoid into UTF-8 text
+func (a ManhattanDistance) MarshalJSON() ([]byte, error) {
+	return json.Marshal(marshalName{Name: manhatDistString})
+}
+
+// MarshalJSON marshalls the sigmoid into UTF-8 text
+func (a *ManhattanDistance) UnmarshalJSON(input []byte) error {
+	s := &marshalName{}
+	json.Unmarshal(input, &s)
+	if s.Name != manhatDistString {
+		return common.UnmarshalMismatch{Expected: manhatDistString, Received: s.Name}
+	}
+	a = &ManhattanDistance{}
+	return nil
+}
+
 var relSqString string = "RelativeSquared"
+
+type relSqName struct {
+	Name string
+	Eps  float64
+}
 
 // Relative squared is the relative error with the value of RelativeSquared added in the denominator
 type RelativeSquared float64
@@ -150,6 +170,23 @@ func (r RelativeSquared) LossAndDeriv(prediction, truth, derivative []float64) (
 	return loss
 }
 
+// MarshalJSON marshalls the sigmoid into UTF-8 text
+func (a RelativeSquared) MarshalJSON() ([]byte, error) {
+	return json.Marshal(relSqName{Name: relSqString, Eps: float64(a)})
+}
+
+// MarshalJSON marshalls the sigmoid into UTF-8 text
+func (a *RelativeSquared) UnmarshalJSON(input []byte) error {
+	s := &relSqName{}
+	json.Unmarshal(input, &s)
+	if s.Name != relSqString {
+		return common.UnmarshalMismatch{Expected: relSqString, Received: s.Name}
+	}
+	b := RelativeSquared(s.Eps)
+	a = &b
+	return nil
+}
+
 var logSqString string = "LogSquared"
 
 // LogSquared uses log(1 + diff*diff) so that really high losses aren't as important
@@ -165,6 +202,22 @@ func (l LogSquared) LossAndDeriv(prediction, truth, deravitive []float64) (loss 
 	}
 	loss /= nSamples
 	return loss
+}
+
+// MarshalJSON marshalls the sigmoid into UTF-8 text
+func (a LogSquared) MarshalJSON() ([]byte, error) {
+	return json.Marshal(marshalName{Name: logSqString})
+}
+
+// MarshalJSON marshalls the sigmoid into UTF-8 text
+func (a *LogSquared) UnmarshalJSON(input []byte) error {
+	s := &marshalName{}
+	json.Unmarshal(input, &s)
+	if s.Name != logSqString {
+		return common.UnmarshalMismatch{Expected: logSqString, Received: s.Name}
+	}
+	a = &LogSquared{}
+	return nil
 }
 
 /*
