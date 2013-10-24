@@ -1,7 +1,6 @@
 package scale
 
 import (
-	"bytes"
 	"encoding/gob"
 	"errors"
 	"github.com/gonum/floats"
@@ -106,30 +105,6 @@ func (n None) Dimensions() int {
 	return n.Dim
 }
 
-func (n *None) GobEncode() ([]byte, error) {
-	w := new(bytes.Buffer)
-	encoder := gob.NewEncoder(w)
-	err := encoder.Encode(n.Dim)
-	if err != nil {
-		return nil, err
-	}
-	err = encoder.Encode(n.Scaled)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
-}
-
-func (n *None) GobDecode(buf []byte) error {
-	r := bytes.NewBuffer(buf)
-	decoder := gob.NewDecoder(r)
-	err := decoder.Decode(n.Dim)
-	if err != nil {
-		return err
-	}
-	return decoder.Decode(n.Scaled)
-}
-
 func (n *None) SetScale(data [][]float64) error {
 	err := checkInputs(data)
 	if err != nil {
@@ -157,48 +132,6 @@ func (l *Linear) IsScaled() bool {
 func (l *Linear) Dimensions() int {
 	return l.Dim
 }
-
-/*
-func (l *Linear) GobEncode() ([]byte, error) {
-	w := new(bytes.Buffer)
-	encoder := gob.NewEncoder(w)
-	err := encoder.Encode(l.Min)
-	if err != nil {
-		return nil, err
-	}
-	err = encoder.Encode(l.Max)
-	if err != nil {
-		return nil, err
-	}
-	err = encoder.Encode(l.Scaled)
-	if err != nil {
-		return nil, err
-	}
-	err = encoder.Encode(l.Dim)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
-}
-
-func (l *Linear) GobDecode(buf []byte) error {
-	r := bytes.NewBuffer(buf)
-	decoder := gob.NewDecoder(r)
-	err := decoder.Decode(&l.Min)
-	if err != nil {
-		return err
-	}
-	err = decoder.Decode(&l.Max)
-	if err != nil {
-		return err
-	}
-	err = decoder.Decode(&l.Scaled)
-	if err != nil {
-		return err
-	}
-	return decoder.Decode(&l.Dim)
-}
-*/
 
 // SetScale sets a linear scale between 0 and 1. If no data
 // points. If the minimum and maximum value are identical in
@@ -303,52 +236,6 @@ func (n *Normal) Dimensions() int {
 	return n.Dim
 }
 
-/*
-func (n *Normal) GobEncode() ([]byte, error) {
-	w := new(bytes.Buffer)
-	encoder := gob.NewEncoder(w)
-	err := encoder.Encode(n.Mu)
-	if err != nil {
-		return nil, err
-	}
-	err = encoder.Encode(n.Sigma)
-	if err != nil {
-		return nil, err
-	}
-	err = encoder.Encode(n.Dim)
-	if err != nil {
-		return nil, err
-	}
-	err = encoder.Encode(n.Scaled)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
-}
-
-func (n *Normal) GobDecode(buf []byte) error {
-	r := bytes.NewBuffer(buf)
-	decoder := gob.NewDecoder(r)
-	err := decoder.Decode(&n.Mu)
-	if err != nil {
-		return err
-	}
-	err = decoder.Decode(&n.Sigma)
-	if err != nil {
-		return err
-	}
-	err = decoder.Decode(&n.Dim)
-	if err != nil {
-		return err
-	}
-	err = decoder.Decode(&n.Scaled)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-*/
-
 // Finds the appropriate scaling of the data such that the dataset has
 //  a mean of 0 and a variance of 1. If the standard deviation of any of
 // the data is zero (all of the entries have the same value),
@@ -433,8 +320,6 @@ type ProbabilityDistribution interface {
 	CumProb(float64) float64
 	Quantile(float64) float64
 	Prob(float64) float64
-	gob.GobDecoder
-	gob.GobEncoder
 }
 
 // Probability scales the inputs based on the supplied
@@ -445,48 +330,6 @@ type Probability struct {
 	Dim                  int
 	Scaled               bool
 }
-
-/*
-func (p *Probability) GobEncode() ([]byte, error) {
-	w := new(bytes.Buffer)
-	encoder := gob.NewEncoder(w)
-	err := encoder.Encode(p.UnscaledDistribution)
-	if err != nil {
-		return nil, err
-	}
-	err = encoder.Encode(p.ScaledDistribution)
-	if err != nil {
-		return nil, err
-	}
-	err = encoder.Encode(p.Dim)
-	if err != nil {
-		return nil, err
-	}
-	err = encoder.Encode(p.Scaled)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
-}
-
-func (p *Probability) GobDecode(buf []byte) error {
-	r := bytes.NewBuffer(buf)
-	decoder := gob.NewDecoder(r)
-	err := decoder.Decode(&p.UnscaledDistribution)
-	if err != nil {
-		return err
-	}
-	err = decoder.Decode(&p.ScaledDistribution)
-	if err != nil {
-		return err
-	}
-	err = decoder.Decode(&p.Dim)
-	if err != nil {
-		return err
-	}
-	return decoder.Decode(&p.Scaled)
-}
-*/
 
 // IsScaled returns true if the scale has been set
 func (p *Probability) IsScaled() bool {
