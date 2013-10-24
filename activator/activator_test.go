@@ -27,8 +27,7 @@ func JSONTest(first MarshalActivator, second UnmarshalActivator) error {
 	if err != nil {
 		return fmt.Errorf("Error unmarshaling")
 	}
-	if !(reflect.DeepEqual(first, second) ||
-		reflect.DeepEqual(first, reflect.ValueOf(second).Elem().Interface())) {
+	if !(reflect.DeepEqual(first, reflect.ValueOf(second).Elem().Interface())) {
 		return fmt.Errorf("Unequal after unmarshal")
 	}
 
