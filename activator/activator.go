@@ -92,9 +92,11 @@ func (n Sigmoid) DActivateDCombination(sum, output float64) float64 {
 	return output * (1 - output)
 }
 
+/*
 func (a Sigmoid) String() string {
 	return sigmoidString
 }
+*/
 
 var sigmoidMarshalString string = prefix + sigmoidString
 
@@ -187,17 +189,17 @@ func (a Tanh) String() string {
 
 var tanhMarshalString string = prefix + tanhString
 
-// MarshalJSON marshalls the tanh into UTF-8 text
+// MarshalJSON marshalls the sigmoid into UTF-8 text
 func (a Tanh) MarshalJSON() ([]byte, error) {
-	return json.Marshal(tanhMarshalString)
+	return json.Marshal(marshalName{Name: tanhMarshalString})
 }
 
-// MarshalJSON marshalls the tanh into UTF-8 text
+// MarshalJSON marshalls the sigmoid into UTF-8 text
 func (a *Tanh) UnmarshalJSON(input []byte) error {
-	var str string
-	json.Unmarshal(input, &str)
-	if str != tanhMarshalString {
-		return common.UnmarshalMismatch{Expected: tanhMarshalString, Received: str}
+	s := &marshalName{}
+	json.Unmarshal(input, &s)
+	if s.Name != tanhMarshalString {
+		return common.UnmarshalMismatch{Expected: tanhMarshalString, Received: s.Name}
 	}
 	a = &Tanh{}
 	return nil
@@ -231,17 +233,17 @@ func (a LinearTanh) String() string {
 
 var linearTanhMarshalString string = prefix + linearTanhString
 
-// MarshalJSON marshalls the linearSigmoid into UTF-8 text
+// MarshalJSON marshalls the sigmoid into UTF-8 text
 func (a LinearTanh) MarshalJSON() ([]byte, error) {
-	return json.Marshal(linearTanhMarshalString)
+	return json.Marshal(marshalName{Name: linearTanhMarshalString})
 }
 
-// MarshalJSON marshalls the linearSigmoid into UTF-8 text
+// MarshalJSON marshalls the sigmoid into UTF-8 text
 func (a *LinearTanh) UnmarshalJSON(input []byte) error {
-	var str string
-	json.Unmarshal(input, &str)
-	if str != linearTanhMarshalString {
-		return common.UnmarshalMismatch{Expected: linearTanhMarshalString, Received: str}
+	s := &marshalName{}
+	json.Unmarshal(input, &s)
+	if s.Name != linearTanhMarshalString {
+		return common.UnmarshalMismatch{Expected: linearTanhMarshalString, Received: s.Name}
 	}
 	a = &LinearTanh{}
 	return nil

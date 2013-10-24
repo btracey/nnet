@@ -1,9 +1,53 @@
 package activator
 
 import (
+	"encoding/json"
+	"fmt"
 	"math"
+	"reflect"
 	"testing"
 )
+
+type MarshalActivator interface {
+	Activator
+	json.Marshaler
+}
+
+type UnmarshalActivator interface {
+	Activator
+	json.Unmarshaler
+}
+
+func JSONTest(first MarshalActivator, second UnmarshalActivator) error {
+	b, err := first.MarshalJSON()
+	if err != nil {
+		return fmt.Errorf("Error marshaling")
+	}
+	err = second.UnmarshalJSON(b)
+	if err != nil {
+		return fmt.Errorf("Error unmarshaling")
+	}
+	if !(reflect.DeepEqual(first, second) ||
+		reflect.DeepEqual(first, reflect.ValueOf(second).Elem().Interface())) {
+		return fmt.Errorf("Unequal after unmarshal")
+	}
+
+	// Check package level function
+	b2, err := MarshalJSON(first)
+	if err != nil {
+		return fmt.Errorf("Error using package marshal: " + err.Error())
+	}
+
+	newActivator, err := UnmarshalJSON(b2)
+	if err != nil {
+		return fmt.Errorf("Error using package unmarshal: " + err.Error())
+	}
+
+	if !reflect.DeepEqual(newActivator, first) {
+		return fmt.Errorf("Not equal after package unmarshal")
+	}
+	return nil
+}
 
 // TODO: Add better tests for JSON
 
@@ -24,27 +68,9 @@ func TestSigmoid(t *testing.T) {
 		t.Errorf("Derivative does not match. %v expected, %v found", trueDeriv, deriv)
 	}
 
-	// Test Marshaling and Unmarshaling from package functions
-	b, err := s.MarshalJSON()
+	err := JSONTest(Sigmoid{}, &Sigmoid{})
 	if err != nil {
-		t.Errorf("Error marshaling")
-	}
-	n := &Sigmoid{}
-	err = n.UnmarshalJSON(b)
-	if err != nil {
-		t.Errorf("Error unmarshaling: " + err.Error() + ". Marshaled text was: " + string(b))
-	}
-	b, err = MarshalJSON(s)
-	if err != nil {
-		t.Errorf("Error package marshaling: " + err.Error())
-	}
-	activator, err := UnmarshalJSON(b)
-	if err != nil {
-		t.Errorf("Error package unmarshalling: " + err.Error())
-	}
-	_, ok := activator.(Sigmoid)
-	if !ok {
-		t.Errorf("Wrong type from package unmarshaling")
+		t.Errorf("Error using JSON: " + err.Error())
 	}
 }
 
@@ -62,27 +88,9 @@ func TestLinear(t *testing.T) {
 		t.Errorf("Derivative does not match. %v expected, %v found", trueDeriv, deriv)
 	}
 
-	// Test Marshaling and Unmarshaling from package functions
-	b, err := s.MarshalJSON()
+	err := JSONTest(Linear{}, &Linear{})
 	if err != nil {
-		t.Errorf("Error marshaling")
-	}
-	n := &Linear{}
-	err = n.UnmarshalJSON(b)
-	if err != nil {
-		t.Errorf("Error unmarshaling: " + err.Error() + ". Marshaled text was: " + string(b))
-	}
-	b, err = MarshalJSON(s)
-	if err != nil {
-		t.Errorf("Error package marshaling ")
-	}
-	activator, err := UnmarshalJSON(b)
-	if err != nil {
-		t.Errorf("Error package unmarshalling")
-	}
-	_, ok := activator.(Linear)
-	if !ok {
-		t.Errorf("Wrong type from package unmarshaling. %#v", activator)
+		t.Errorf("Error using JSON: " + err.Error())
 	}
 
 }
@@ -103,6 +111,10 @@ func TestTanh(t *testing.T) {
 	if math.Abs(deriv-float64(trueDeriv)) > 1E-15 {
 		t.Errorf("Derivative does not match. %v expected, %v found", trueDeriv, deriv)
 	}
+	err := JSONTest(Tanh{}, &Tanh{})
+	if err != nil {
+		t.Errorf("Error using JSON: " + err.Error())
+	}
 }
 
 func TestLinearTanh(t *testing.T) {
@@ -120,5 +132,10 @@ func TestLinearTanh(t *testing.T) {
 	deriv := s.DActivateDCombination(sum, output)
 	if math.Abs(deriv-float64(trueDeriv)) > 1E-15 {
 		t.Errorf("Derivative does not match. %v expected, %v found", trueDeriv, deriv)
+	}
+
+	err := JSONTest(LinearTanh{}, &LinearTanh{})
+	if err != nil {
+		t.Errorf("Error using JSON: " + err.Error())
 	}
 }
