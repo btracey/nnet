@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"reflect"
 	"sync"
 )
 
@@ -77,16 +78,26 @@ func (net *Net) GobEncode() ([]byte, error) {
 	return w.Bytes(), nil
 }
 
+type netMarshal struct {
+	LosserType             reflect.Type
+	Losser                 loss.Losser
+	NumInputs              int
+	NumOutputs             int
+	TotalNumParameters     int
+	NumParametersPerNeuron [][]int
+	ParameterIndex         [][]int
+}
+
 // Save the net to a string file (for reading in to non-go programs for example). If custom
 // interfaces are used, they will be marshaled with custom and if the custom type is a text
 // marshaller it will write
-func (net *Net) MarshalJSON() (text []byte, err error) {
-	//b := make([]byte, 0, 1000)
+func (net *Net) MarshalJSON() (b []byte, err error) {
+	// First, martial the interfaces
 
 }
 
 // TextUnmarshaler
-func (net *Net) MarshalJSON(text []byte) error {
+func (net *Net) UnmarshalJSON(text []byte) error {
 
 }
 

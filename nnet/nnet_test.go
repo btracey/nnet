@@ -17,6 +17,13 @@ const (
 	netFDTol  = 1e-8
 )
 
+func TestJSON(t *testing.T) {
+	net := DefaultRegression(3, 4, 1, 10)
+	b, err := net.MarshalJSON()
+	str := string(b)
+	fmt.Println(str)
+}
+
 func TestGob(t *testing.T) {
 	nInputs := 4
 	nOutputs := 5
