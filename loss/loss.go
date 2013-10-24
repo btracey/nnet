@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"github.com/btracey/nnet/common"
 	"math"
+
+	"fmt"
 )
 
 func init() {
@@ -179,11 +181,12 @@ func (a RelativeSquared) MarshalJSON() ([]byte, error) {
 func (a *RelativeSquared) UnmarshalJSON(input []byte) error {
 	s := &relSqName{}
 	json.Unmarshal(input, &s)
+	fmt.Println(s)
 	if s.Name != relSqString {
 		return common.UnmarshalMismatch{Expected: relSqString, Received: s.Name}
 	}
 	b := RelativeSquared(s.Eps)
-	a = &b
+	(*a) = b
 	return nil
 }
 

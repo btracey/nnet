@@ -1,8 +1,11 @@
 package loss
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/gonum/floats"
 	"math"
+	"reflect"
 	"testing"
 )
 
@@ -11,6 +14,16 @@ const (
 	FDTol  = 10E-8
 	TOL    = 1E-14
 )
+
+type MarshalLosser interface {
+	Losser
+	json.Marshaler
+}
+
+type UnmarshalLosser interface {
+	Losser
+	json.Unmarshaler
+}
 
 func finiteDifferenceLosser(losser Losser, prediction, truth []float64) (derivative, fdDerivative []float64) {
 	if len(prediction) != len(truth) {
@@ -33,6 +46,36 @@ func finiteDifferenceLosser(losser Losser, prediction, truth []float64) (derivat
 	return
 }
 
+func JSONTest(first MarshalLosser, second UnmarshalLosser) error {
+	b, err := first.MarshalJSON()
+	if err != nil {
+		return fmt.Errorf("Error marshaling")
+	}
+	err = second.UnmarshalJSON(b)
+	if err != nil {
+		return fmt.Errorf("Error unmarshaling")
+	}
+	if !(reflect.DeepEqual(first, reflect.ValueOf(second).Elem().Interface())) {
+		return fmt.Errorf("Unequal after unmarshal")
+	}
+
+	// Check package level function
+	b2, err := MarshalJSON(first)
+	if err != nil {
+		return fmt.Errorf("Error using package marshal: " + err.Error())
+	}
+
+	newActivator, err := UnmarshalJSON(b2)
+	if err != nil {
+		return fmt.Errorf("Error using package unmarshal: " + err.Error())
+	}
+
+	if !reflect.DeepEqual(newActivator, first) {
+		return fmt.Errorf("Not equal after package unmarshal")
+	}
+	return nil
+}
+
 func TestSquaredDistance(t *testing.T) {
 	prediction := []float64{1, 2, 3}
 	truth := []float64{1.1, 2.2, 2.7}
@@ -47,6 +90,11 @@ func TestSquaredDistance(t *testing.T) {
 	derivative, fdDerivative := finiteDifferenceLosser(sq, prediction, truth)
 	if !floats.EqualApprox(derivative, fdDerivative, FDTol) {
 		t.Errorf("Derivative doesn't match. deriv: %v, fdDeriv: %v ", derivative, fdDerivative)
+	}
+
+	err := JSONTest(SquaredDistance{}, &SquaredDistance{})
+	if err != nil {
+		t.Errorf("JSON error: " + err.Error())
 	}
 }
 
@@ -64,6 +112,11 @@ func TestManhattanDistance(t *testing.T) {
 	derivative, fdDerivative := finiteDifferenceLosser(sq, prediction, truth)
 	if !floats.EqualApprox(derivative, fdDerivative, FDTol) {
 		t.Errorf("Derivative doesn't match. \n deriv: %v \n fdDeriv: %v ", derivative, fdDerivative)
+	}
+
+	err := JSONTest(ManhattanDistance{}, &ManhattanDistance{})
+	if err != nil {
+		t.Errorf("JSON error: " + err.Error())
 	}
 }
 
@@ -83,6 +136,15 @@ func TestRelativeSquared(t *testing.T) {
 	if !floats.EqualApprox(derivative, fdDerivative, FDTol) {
 		t.Errorf("Derivative doesn't match. \n deriv: %v \n fdDeriv: %v ", derivative, fdDerivative)
 	}
+
+	a := RelativeSquared(2)
+	b := RelativeSquared(5)
+	c := &a
+	fmt.Println(c)
+	err := JSONTest(b, c)
+	if err != nil {
+		t.Errorf("JSON error: " + err.Error())
+	}
 }
 
 func TestLogSquared(t *testing.T) {
@@ -99,5 +161,9 @@ func TestLogSquared(t *testing.T) {
 	derivative, fdDerivative := finiteDifferenceLosser(sq, prediction, truth)
 	if !floats.EqualApprox(derivative, fdDerivative, FDTol) {
 		t.Errorf("Derivative doesn't match. \n deriv: %v \n fdDeriv: %v ", derivative, fdDerivative)
+	}
+	err := JSONTest(LogSquared{}, &LogSquared{})
+	if err != nil {
+		t.Errorf("JSON error: " + err.Error())
 	}
 }
