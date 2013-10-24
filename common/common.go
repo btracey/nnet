@@ -29,18 +29,21 @@ func (u UnmarshalMismatch) Error() string {
 // When unmarshaling, the Type field will always be marshaled. If there is
 // a value in the marshaler
 type InterfaceMarshaler struct {
-	Value interface{}
-	Type  string
-	Bytes []byte
+	Value   interface{}
+	PkgPath string
+	Name    string
+	Bytes   []byte
 }
 
 type interfaceMarshaler struct {
-	Type  string
-	Value interface{}
+	PkgPath string
+	Name    string
+	Value   interface{}
 }
 
 type typeUnmarshaler struct {
-	Type string
+	PkgPath string
+	Name    string
 }
 
 type valueUnmarshaler struct {
@@ -48,20 +51,28 @@ type valueUnmarshaler struct {
 }
 
 func (i *InterfaceMarshaler) MarshalJSON() ([]byte, error) {
+	fmt.Println(i.Value)
 	inter := interfaceMarshaler{
-		Type:  reflect.TypeOf(i.Value).String(),
-		Value: i.Value,
+		PkgPath: reflect.TypeOf(i.Value).Elem().PkgPath(),
+		Name:    reflect.TypeOf(i.Value).Elem().Name(),
+		Value:   i.Value,
 	}
+	fmt.Printf("inter: %#v", inter)
 	return json.Marshal(inter)
 }
 
 type TypeMismatch struct {
-	ValueType string
-	JSONType  string
+	ValuePkg  string
+	JSONPkg   string
+	ValueName string
+	JSONName  string
 }
 
 func (t TypeMismatch) Error() string {
-	return fmt.Sprintf("Mismatch between provided type and JSON type. Provided type: %v, JSONType %v", t.ValueType, t.JSONType)
+	if t.ValueName == "" {
+		fmt.Sprintf("nnet/common: package mismatch. Provided pkg: %v, JSON pkg %v", t.ValuePkg, t.JSONPkg)
+	}
+	return fmt.Sprintf("nnet/common: name mismatch. Provided name: %v, JSON name %v", t.ValueName, t.JSONName)
 }
 
 var NoValue = errors.New("No value provided for unmarshaling")
@@ -69,7 +80,8 @@ var NoValue = errors.New("No value provided for unmarshaling")
 func (i *InterfaceMarshaler) UnmarshalJSON(data []byte) error {
 	// Get the type
 	t := &typeUnmarshaler{}
-	i.Type = t.Type
+	i.PkgPath = t.PkgPath
+	i.Name = t.Name
 	err := json.Unmarshal(data, t)
 	if err != nil {
 		return err
@@ -80,10 +92,20 @@ func (i *InterfaceMarshaler) UnmarshalJSON(data []byte) error {
 		return NoValue
 	}
 
-	typeOfValue := reflect.TypeOf(i.Value).String()
+	typeOfValue := reflect.TypeOf(i.Value)
+
 	// If the value is not nil, check that the type matches
-	if typeOfValue != t.Type {
-		return TypeMismatch{ValueType: typeOfValue, JSONType: t.Type}
+	if typeOfValue.PkgPath() != t.PkgPath {
+		return TypeMismatch{
+			ValuePkg: typeOfValue.PkgPath(),
+			JSONPkg:  t.PkgPath,
+		}
+	}
+	if typeOfValue.Name() != t.Name {
+		return TypeMismatch{
+			ValueName: typeOfValue.Name(),
+			JSONName:  t.Name,
+		}
 	}
 	// Unmarshal the value: Will return an error if the value is not a pointer
 	v := &valueUnmarshaler{Value: i.Value}

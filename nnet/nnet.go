@@ -1,15 +1,17 @@
 package nnet
 
 import (
+	"github.com/btracey/nnet/common"
 	"github.com/btracey/nnet/loss"
 	"github.com/btracey/nnet/scale"
 
 	"bytes"
 	"encoding/gob"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"reflect"
+	//"reflect"
 	"sync"
 )
 
@@ -79,8 +81,9 @@ func (net *Net) GobEncode() ([]byte, error) {
 }
 
 type netMarshal struct {
-	LosserType             reflect.Type
-	Losser                 loss.Losser
+	Losser                 *common.InterfaceMarshaler
+	InputScaler            *common.InterfaceMarshaler
+	OutputScaler           *common.InterfaceMarshaler
 	NumInputs              int
 	NumOutputs             int
 	TotalNumParameters     int
@@ -93,12 +96,22 @@ type netMarshal struct {
 // marshaller it will write
 func (net *Net) MarshalJSON() (b []byte, err error) {
 	// First, martial the interfaces
-
+	n := netMarshal{
+		Losser:                 &common.InterfaceMarshaler{Value: net.Losser},
+		InputScaler:            &common.InterfaceMarshaler{Value: net.InputScaler},
+		OutputScaler:           &common.InterfaceMarshaler{Value: net.OutputScaler},
+		NumInputs:              net.nInputs,
+		NumOutputs:             net.nOutputs,
+		TotalNumParameters:     net.totalNumParameters,
+		NumParametersPerNeuron: net.nParameters,
+		ParameterIndex:         net.parameterIdx,
+	}
+	return json.Marshal(n)
 }
 
 // TextUnmarshaler
 func (net *Net) UnmarshalJSON(text []byte) error {
-
+	return nil
 }
 
 // GobDecode some comment about needing to register custom types
