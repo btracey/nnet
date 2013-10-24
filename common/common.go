@@ -53,11 +53,10 @@ type valueUnmarshaler struct {
 func (i *InterfaceMarshaler) MarshalJSON() ([]byte, error) {
 	fmt.Println(i.Value)
 	inter := interfaceMarshaler{
-		PkgPath: reflect.TypeOf(i.Value).Elem().PkgPath(),
-		Name:    reflect.TypeOf(i.Value).Elem().Name(),
+		PkgPath: reflect.ValueOf(i.Value).Elem().Type().PkgPath(),
+		Name:    reflect.ValueOf(i.Value).Elem().Type().Name(),
 		Value:   i.Value,
 	}
-	fmt.Printf("inter: %#v", inter)
 	return json.Marshal(inter)
 }
 
@@ -92,7 +91,7 @@ func (i *InterfaceMarshaler) UnmarshalJSON(data []byte) error {
 		return NoValue
 	}
 
-	typeOfValue := reflect.TypeOf(i.Value)
+	typeOfValue := reflect.ValueOf(i.Value).Elem().Type()
 
 	// If the value is not nil, check that the type matches
 	if typeOfValue.PkgPath() != t.PkgPath {
