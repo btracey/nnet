@@ -30,17 +30,17 @@ func (u UnmarshalMismatch) Error() string {
 // a value in the marshaler
 type InterfaceMarshaler struct {
 	Value interface{}
-	Type  reflect.Type
+	Type  string
 	Bytes []byte
 }
 
 type interfaceMarshaler struct {
-	Type  reflect.Type
+	Type  string
 	Value interface{}
 }
 
 type typeUnmarshaler struct {
-	Type reflect.Type
+	Type string
 }
 
 type valueUnmarshaler struct {
@@ -49,46 +49,48 @@ type valueUnmarshaler struct {
 
 func (i *InterfaceMarshaler) MarshalJSON() ([]byte, error) {
 	inter := interfaceMarshaler{
-		Type:  reflect.TypeOf(i.Value),
+		Type:  reflect.TypeOf(i.Value).String(),
 		Value: i.Value,
 	}
 	return json.Marshal(inter)
 }
 
 type TypeMismatch struct {
-	ValueType reflect.Type
-	JSONType  reflect.Type
+	ValueType string
+	JSONType  string
 }
 
 func (t TypeMismatch) Error() string {
 	return fmt.Sprintf("Mismatch between provided type and JSON type. Provided type: %v, JSONType %v", t.ValueType, t.JSONType)
 }
 
+var NoValue = errors.New("No value provided for unmarshaling")
+
 func (i *InterfaceMarshaler) UnmarshalJSON(data []byte) error {
 	// Get the type
 	t := &typeUnmarshaler{}
 	i.Type = t.Type
-	json.Unmarshal(data, t)
+	err := json.Unmarshal(data, t)
+	if err != nil {
+		return err
+	}
 	if i.Value == nil {
 		// Nothing more we can do
 		i.Bytes = data
+		return NoValue
 	}
 
-	typeOfValue := reflect.TypeOf(i.Value)
+	typeOfValue := reflect.TypeOf(i.Value).String()
 	// If the value is not nil, check that the type matches
 	if typeOfValue != t.Type {
 		return TypeMismatch{ValueType: typeOfValue, JSONType: t.Type}
 	}
-	// If they do match, check if it's a pointer type
-	isPtr := reflect.ValueOf(i.Value).Kind() == reflect.Ptr
-
-	// If it is not a pointer, can't unmarshal a pointer to it.
-	if !isPtr {
-		return errors.New("Can't unmarshal a non-pointer type")
+	// Unmarshal the value: Will return an error if the value is not a pointer
+	v := &valueUnmarshaler{Value: i.Value}
+	err = json.Unmarshal(data, v)
+	if err != nil {
+		return err
 	}
-
-	v := valueUnmarshaler{Value: i.Value}
-	json.Unmarshal(data, v)
 	i.Value = v.Value
 	return nil
 }
