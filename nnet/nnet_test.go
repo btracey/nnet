@@ -20,6 +20,10 @@ const (
 func TestJSON(t *testing.T) {
 	net := DefaultRegression(3, 4, 1, 10)
 	b, err := net.MarshalJSON()
+	if err != nil {
+		fmt.Println(string(b))
+		t.Errorf("Error marshaling net: " + err.Error())
+	}
 	str := string(b)
 	fmt.Println(str)
 }

@@ -53,11 +53,21 @@ type valueUnmarshaler struct {
 func (i *InterfaceMarshaler) MarshalJSON() ([]byte, error) {
 	// Need to get the type of the value, not the pointer to the value
 	inter := interfaceMarshaler{
-		PkgPath: reflect.ValueOf(i.Value).Elem().Type().PkgPath(),
-		Name:    reflect.ValueOf(i.Value).Elem().Type().Name(),
-		Value:   i.Value,
+		Value: i.Value,
 	}
-	return json.Marshal(inter)
+	if reflect.ValueOf(i.Value).Kind() == reflect.Ptr {
+		inter.PkgPath = reflect.ValueOf(i.Value).Elem().Type().PkgPath()
+		inter.Name = reflect.ValueOf(i.Value).Elem().Type().Name()
+	} else {
+		inter.PkgPath = reflect.TypeOf(i.Value).PkgPath()
+		inter.Name = reflect.TypeOf(i.Value).Name()
+	}
+	b, err := json.Marshal(inter)
+	if err != nil {
+		fmt.Println("common In error")
+		return b, fmt.Errorf("nnet/common: error marshaling interface: " + err.Error())
+	}
+	return b, nil
 }
 
 type TypeMismatch struct {

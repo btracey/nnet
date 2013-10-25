@@ -96,10 +96,13 @@ type netMarshal struct {
 // marshaller it will write
 func (net *Net) MarshalJSON() (b []byte, err error) {
 	// First, martial the interfaces
-	n := netMarshal{
-		Losser:                 &common.InterfaceMarshaler{Value: net.Losser},
-		InputScaler:            &common.InterfaceMarshaler{Value: net.InputScaler},
-		OutputScaler:           &common.InterfaceMarshaler{Value: net.OutputScaler},
+	n := &netMarshal{
+
+		Losser: &common.InterfaceMarshaler{Value: net.Losser},
+		/*
+			InputScaler:            &common.InterfaceMarshaler{Value: net.InputScaler},
+			OutputScaler:           &common.InterfaceMarshaler{Value: net.OutputScaler},
+		*/
 		NumInputs:              net.nInputs,
 		NumOutputs:             net.nOutputs,
 		TotalNumParameters:     net.totalNumParameters,

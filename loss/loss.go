@@ -93,6 +93,7 @@ func (l SquaredDistance) LossAndDeriv(prediction, truth, derivative []float64) (
 	return loss
 }
 
+/*
 // MarshalJSON marshalls the sigmoid into UTF-8 text
 func (a SquaredDistance) MarshalJSON() ([]byte, error) {
 	return json.Marshal(marshalName{Name: sqDistString})
@@ -108,6 +109,7 @@ func (a *SquaredDistance) UnmarshalJSON(input []byte) error {
 	a = &SquaredDistance{}
 	return nil
 }
+*/
 
 var manhatDistString string = "ManhattanDistance"
 
