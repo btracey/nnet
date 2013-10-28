@@ -39,6 +39,8 @@ type Neuron interface {
 	DCombineDInput(params []float64, inputs []float64, combination float64, deriv []float64)
 	//gob.GobDecoder
 	//gob.GobEncoder
+
+	// Shouldn't need to add json.Marshaler because layer can do it
 }
 
 // A sum neuron takes a weighted sum of all the inputs and pipes them through an activator function
