@@ -1,6 +1,8 @@
 package main
 
 import (
+	//"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/btracey/nnet/nnet"
 	"os"
@@ -34,11 +36,20 @@ func main() {
 	}
 
 	// JSON the net
-	b, err := net.MarshalJSON()
+	b, err := json.MarshalIndent(net, "", "\t")
 	if err != nil {
 		fmt.Println("Error marshaling JSON: " + err.Error())
 	}
 
+	/*
+		buf := make([]byte, len(b)+100)
+		dst := bytes.NewBuffer(buf)
+		err = json.Indent(dst, b, "", "\t")
+		if err != nil {
+			fmt.Println("Err indenting json")
+			os.Exit(4)
+		}
+	*/
 	var jsonname string
 	if len(os.Args) == 3 {
 		jsonname = os.Args[2]
@@ -50,6 +61,7 @@ func main() {
 	defer f.Close()
 	if err != nil {
 		fmt.Println("Error creating new file")
+		os.Exit(5)
 	}
 	f.Write(b)
 

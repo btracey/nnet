@@ -41,6 +41,7 @@ func TestGob(t *testing.T) {
 	net.InputScaler.SetScale(rInput)
 	net.OutputScaler = &scale.Normal{}
 	net.OutputScaler.SetScale(rOutput)
+	net.Losser = loss.LogSquared{}
 
 	bytes, err := net.GobEncode()
 	if err != nil {

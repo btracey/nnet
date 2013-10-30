@@ -89,12 +89,20 @@ type netMarshal struct {
 	TotalNumParameters     int
 	NumParametersPerNeuron [][]int
 	ParameterIndex         [][]int
+	Parameters             []float64
+	NumLayers              int
+	NumNeuronsPerLayer     []int
 }
 
 // Save the net to a string file (for reading in to non-go programs for example). If custom
 // interfaces are used, they will be marshaled with custom and if the custom type is a text
 // marshaller it will write
 func (net *Net) MarshalJSON() (b []byte, err error) {
+	nLayers := len(net.nParameters)
+	nNeuronsPerLayer := make([]int, nLayers)
+	for i := range nNeuronsPerLayer {
+		nNeuronsPerLayer[i] = len(net.nParameters[i])
+	}
 	// First, martial the interfaces
 	n := &netMarshal{
 
@@ -106,8 +114,18 @@ func (net *Net) MarshalJSON() (b []byte, err error) {
 		TotalNumParameters:     net.totalNumParameters,
 		NumParametersPerNeuron: net.nParameters,
 		ParameterIndex:         net.parameterIdx,
+		Parameters:             net.parametersSlice,
+		NumLayers:              nLayers,
+		NumNeuronsPerLayer:     nNeuronsPerLayer,
 	}
-	return json.Marshal(n)
+	b, err = json.Marshal(n)
+	if err != nil {
+		return b, err
+	}
+	//buf := make([]bytes, len(b))
+	//dst := bytes.NewBuffer(buf)
+	//err = json.Indent(dst, b, prefix, indent)
+	return b, err
 }
 
 // TextUnmarshaler
@@ -360,9 +378,9 @@ func (net *Net) PredictSlice(inputs [][]float64) (predictions [][]float64, err e
 	if !net.OutputScaler.IsScaled() {
 		return nil, errors.New("Scale must be set before calling predict")
 	}
-	for _, input := range inputs {
+	for i, input := range inputs {
 		if len(input) != net.nInputs {
-			return nil, errors.New("Lengths of all the inputs must match net.nInputs")
+			return nil, fmt.Errorf("Lengths of all the inputs must match net.nInputs. Net inputs: %v, Input %v: %v", net.nInputs, i, len(input))
 		}
 	}
 	predictions = make([][]float64, len(inputs))

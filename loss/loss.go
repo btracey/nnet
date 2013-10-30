@@ -2,11 +2,11 @@ package loss
 
 import (
 	"encoding/gob"
-	"encoding/json"
-	"github.com/btracey/nnet/common"
+	//"encoding/json"
+	//"github.com/btracey/nnet/common"
 	"math"
 
-	"fmt"
+	//"fmt"
 )
 
 func init() {
@@ -16,6 +16,7 @@ func init() {
 	gob.Register(LogSquared{})
 }
 
+/*
 // MarshalText marshalls the activators in this package for use with a
 // TextMarshaller. If the activator is not from this package, a
 // NotInPackage error will be returned
@@ -55,7 +56,7 @@ func UnmarshalJSON(b []byte) (Losser, error) {
 		return nil, common.NotInPackage
 	}
 }
-
+*/
 type marshalName struct{ Name string }
 
 // prefix is for marshalling and unmarshalling. The
@@ -133,6 +134,7 @@ func (m ManhattanDistance) LossAndDeriv(prediction, truth, derivative []float64)
 	return loss
 }
 
+/*
 // MarshalJSON marshalls the sigmoid into UTF-8 text
 func (a ManhattanDistance) MarshalJSON() ([]byte, error) {
 	return json.Marshal(marshalName{Name: manhatDistString})
@@ -148,6 +150,7 @@ func (a *ManhattanDistance) UnmarshalJSON(input []byte) error {
 	a = &ManhattanDistance{}
 	return nil
 }
+*/
 
 var relSqString string = "RelativeSquared"
 
@@ -174,6 +177,8 @@ func (r RelativeSquared) LossAndDeriv(prediction, truth, derivative []float64) (
 	return loss
 }
 
+/*
+
 // MarshalJSON marshalls the sigmoid into UTF-8 text
 func (a RelativeSquared) MarshalJSON() ([]byte, error) {
 	return json.Marshal(relSqName{Name: relSqString, Eps: float64(a)})
@@ -191,6 +196,7 @@ func (a *RelativeSquared) UnmarshalJSON(input []byte) error {
 	(*a) = b
 	return nil
 }
+*/
 
 var logSqString string = "LogSquared"
 
@@ -209,6 +215,7 @@ func (l LogSquared) LossAndDeriv(prediction, truth, deravitive []float64) (loss 
 	return loss
 }
 
+/*
 // MarshalJSON marshalls the sigmoid into UTF-8 text
 func (a LogSquared) MarshalJSON() ([]byte, error) {
 	return json.Marshal(marshalName{Name: logSqString})
@@ -224,6 +231,7 @@ func (a *LogSquared) UnmarshalJSON(input []byte) error {
 	a = &LogSquared{}
 	return nil
 }
+*/
 
 /*
 // Information treats the predictions as coming from the
