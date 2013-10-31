@@ -122,22 +122,48 @@ func (net *Net) MarshalJSON() (b []byte, err error) {
 	if err != nil {
 		return b, err
 	}
+
+	fmt.Println("Done marshaling in nnet")
 	//buf := make([]bytes, len(b))
 	//dst := bytes.NewBuffer(buf)
 	//err = json.Indent(dst, b, prefix, indent)
 	return b, err
 }
 
-// TextUnmarshaler
+type lossUnmarshaler struct {
+	Losser *common.InterfaceMarshaler
+}
+
+// UnmarshalJSON unmarshals the net. If the interfaces are not part
+// of the nnet suite, they must be
 func (net *Net) UnmarshalJSON(data []byte) error {
-	// Unmarshal the struct
 	v := &netMarshal{}
-	err = json.Unmarshal(data, v)
+	// Populate the interfaces with their values from the net
+	if net.Losser != nil {
+		v.Losser.Value = net.Losser
+	} else {
+		// Unmarshal the losser
+		t := &lossUnmarshaler{Losser: &common.InterfaceMarshaler{}}
+		err := json.Unmarshal(data, t)
+		if err != common.NoValue {
+			return err
+		}
+		if t.Losser.PkgPath != "github.com/btracey/nnet/loss" {
+			return errors.New("Losser not from nnet")
+		}
+
+	}
+	v.InputScaler.Value = net.InputScaler
+	v.OutputScaler.Value = net.OutputScaler
+
+	fmt.Println("Just before unmarshal call nnet")
+	err := json.Unmarshal(data, v)
+	fmt.Printf("%#v\n", v)
 	if err != nil {
-		return fmt.Errorf("Error unmarshaling file: " + err.Error())
+		return fmt.Errorf("Error unmarshaling data: " + err.Error())
 	}
 
-	fmt.Println("%#v", v)
+	fmt.Println("%#v\n", v)
 
 	return nil
 }

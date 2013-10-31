@@ -50,18 +50,24 @@ type valueUnmarshaler struct {
 	Value interface{}
 }
 
+func InterfaceLocation(i interface{}) (pkgpath string, name string) {
+	if reflect.ValueOf(i).Kind() == reflect.Ptr {
+		pkgpath = reflect.ValueOf(i).Elem().Type().PkgPath()
+		name = reflect.ValueOf(i).Elem().Type().Name()
+	} else {
+		pkgpath = reflect.TypeOf(i).PkgPath()
+		name = reflect.TypeOf(i).Name()
+	}
+	return
+}
+
 func (i *InterfaceMarshaler) MarshalJSON() ([]byte, error) {
 	// Need to get the type of the value, not the pointer to the value
 	inter := interfaceMarshaler{
 		Value: i.Value,
 	}
-	if reflect.ValueOf(i.Value).Kind() == reflect.Ptr {
-		inter.PkgPath = reflect.ValueOf(i.Value).Elem().Type().PkgPath()
-		inter.Name = reflect.ValueOf(i.Value).Elem().Type().Name()
-	} else {
-		inter.PkgPath = reflect.TypeOf(i.Value).PkgPath()
-		inter.Name = reflect.TypeOf(i.Value).Name()
-	}
+
+	inter.PkgPath, inter.Name = InterfaceLocation(i.Value)
 	b, err := json.Marshal(inter)
 	if err != nil {
 		fmt.Println("common In error")
@@ -84,17 +90,17 @@ func (t TypeMismatch) Error() string {
 	return fmt.Sprintf("nnet/common: name mismatch. Provided name: %v, JSON name %v", t.ValueName, t.JSONName)
 }
 
-var NoValue = errors.New("No value provided for unmarshaling")
+var NoValue = errors.New("nnet/common: no value provided for unmarshaling")
 
 func (i *InterfaceMarshaler) UnmarshalJSON(data []byte) error {
 	// Get the type
 	t := &typeUnmarshaler{}
-	i.PkgPath = t.PkgPath
-	i.Name = t.Name
 	err := json.Unmarshal(data, t)
 	if err != nil {
 		return err
 	}
+	i.PkgPath = t.PkgPath
+	i.Name = t.Name
 	if i.Value == nil {
 		// Nothing more we can do
 		i.Bytes = data

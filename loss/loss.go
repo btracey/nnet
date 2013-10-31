@@ -3,8 +3,11 @@ package loss
 import (
 	"encoding/gob"
 	//"encoding/json"
-	//"github.com/btracey/nnet/common"
+	"errors"
+	"github.com/btracey/nnet/common"
 	"math"
+	"path/filepath"
+	"reflect"
 
 	//"fmt"
 )
@@ -14,6 +17,47 @@ func init() {
 	gob.Register(ManhattanDistance{})
 	gob.Register(RelativeSquared(0))
 	gob.Register(LogSquared{})
+
+	// Add them to the losser
+	Register(SquaredDistance{})
+	Register(ManhattanDistance{})
+	Register(RelativeSquared(0))
+	Register(LogSquared{})
+
+}
+
+// losserMap is for converting a string to a losser
+var losserMap map[string]Losser
+var isPtrMap map[string]bool
+
+// Register adds a losser to the map with the name PkgPath + Name
+func Register(l Losser) {
+	pkgpath, name := common.InterfaceLocation(l)
+	str := filepath.Join(pkgpath, name)
+	b := reflect.ValueOf(l).Kind() == reflect.Ptr
+	losserMap[str] = l
+	isPtrMap[str] = b
+
+}
+
+var NotRegistered error = errors.New("nnet/loss string not registered. string must be pkgpath/name for the type")
+
+// FromString returns a copy of the losser
+func FromString(str string) (Losser, error) {
+	val, ok := losserMap[str]
+	if !ok {
+		return nil, NotRegistered
+	}
+	// Make a copy of that type
+	newVal := reflect.New(reflect.TypeOf(val))
+
+	// See if we want a pointer or not
+	b := isPtrMap[str]
+	if b {
+		return newVal.Interface().(Losser), nil
+	}
+	// Get the value of the interface
+	return newVal.Elem().Interface().(Losser), nil
 }
 
 /*

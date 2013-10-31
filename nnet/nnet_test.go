@@ -26,6 +26,13 @@ func TestJSON(t *testing.T) {
 	}
 	str := string(b)
 	fmt.Println(str)
+
+	net2 := &Net{}
+	err = net2.UnmarshalJSON(b)
+	if err != nil {
+		t.Errorf("Error unmarshaling: " + err.Error())
+	}
+
 }
 
 func TestGob(t *testing.T) {
