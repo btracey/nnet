@@ -129,7 +129,16 @@ func (net *Net) MarshalJSON() (b []byte, err error) {
 }
 
 // TextUnmarshaler
-func (net *Net) UnmarshalJSON(text []byte) error {
+func (net *Net) UnmarshalJSON(data []byte) error {
+	// Unmarshal the struct
+	v := &netMarshal{}
+	err = json.Unmarshal(data, v)
+	if err != nil {
+		return fmt.Errorf("Error unmarshaling file: " + err.Error())
+	}
+
+	fmt.Println("%#v", v)
+
 	return nil
 }
 
