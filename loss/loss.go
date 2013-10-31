@@ -2,7 +2,7 @@ package loss
 
 import (
 	"encoding/gob"
-	//"encoding/json"
+	"encoding/json"
 	"errors"
 	"github.com/btracey/nnet/common"
 	"math"
@@ -29,6 +29,52 @@ func init() {
 
 }
 
+type LossMarshaler struct {
+	L Losser
+}
+
+type lossMarshaler struct {
+	Type  string
+	Value Losser
+}
+
+type typeUnmarshaler struct {
+	Type string
+}
+
+type valueUnmarshaler struct {
+	Value Losser
+}
+
+func (l *LossMarshaler) MarshalJSON() ([]byte, error) {
+	name := common.InterfaceFullTypename(l.L)
+	// Check that the type has been registered
+	_, ok := losserMap[name]
+	if !ok {
+		return nil, NotRegistered
+	}
+	marshaler := &lossMarshaler{
+		Type:  name,
+		Value: l.L,
+	}
+	return json.Marshal(marshaler)
+}
+func (l *LossMarshaler) UnmarshalJSON(data []byte) error {
+	// First, unmarshal the type
+	t := &typeUnmarshaler{}
+	json.Unmarshal(data, t)
+	// Get the losser
+	losser, ok := losserMap[t.Type]
+	if !ok {
+		return NotRegistered
+	}
+
+	v := &valueUnmarshaler{Value: losser}
+	json.Unmarshal(data, v)
+	l.L = v.Value
+	return nil
+}
+
 // losserMap is for converting a string to a losser
 var losserMap map[string]Losser
 
@@ -39,12 +85,12 @@ func Register(l Losser) {
 	if !b {
 		panic("Must register pointer to type")
 	}
-	str := common.InterfaceFullname(l)
+	str := common.InterfaceFullTypename(l)
 	losserMap[str] = l
 
 }
 
-var NotRegistered error = errors.New("nnet/loss string not registered. string must be pkgpath/name for the type")
+var NotRegistered error = errors.New("nnet/loss: losser type not registered")
 
 // FromString returns a copy of the losser
 func FromString(str string) (Losser, error) {

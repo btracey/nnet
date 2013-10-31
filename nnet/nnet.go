@@ -139,9 +139,7 @@ type lossUnmarshaler struct {
 func (net *Net) UnmarshalJSON(data []byte) error {
 	v := &netMarshal{}
 	// Populate the interfaces with their values from the net
-	if net.Losser != nil {
-		v.Losser.Value = net.Losser
-	} else {
+	if net.Losser == nil {
 		// Unmarshal the losser
 		t := &lossUnmarshaler{Losser: &common.InterfaceMarshaler{}}
 		err := json.Unmarshal(data, t)
@@ -151,8 +149,8 @@ func (net *Net) UnmarshalJSON(data []byte) error {
 		if t.Losser.PkgPath != "github.com/btracey/nnet/loss" {
 			return errors.New("Losser not from nnet")
 		}
-
 	}
+	v.Losser.Value = net.Losser
 	v.InputScaler.Value = net.InputScaler
 	v.OutputScaler.Value = net.OutputScaler
 

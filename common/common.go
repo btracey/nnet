@@ -51,7 +51,7 @@ type valueUnmarshaler struct {
 	Value interface{}
 }
 
-func InterfaceFullname(i interface{}) string {
+func InterfaceFullTypename(i interface{}) string {
 	pkgpath, pkgname := InterfaceLocation(i)
 	return filepath.Join(pkgpath, pkgname)
 }

@@ -22,13 +22,30 @@ var doesNotMatch error = errors.New("unregistered not equal")
 
 func testUnregister(l interface{}) error {
 	// Get the name and path
-	str := common.InterfaceFullname(l)
+	str := common.InterfaceFullTypename(l)
 	losser, err := FromString(str)
 	if err != nil {
 		return fromStringError
 	}
 	b := reflect.DeepEqual(l, losser)
 	if !b {
+		return doesNotMatch
+	}
+	return nil
+}
+
+func testMarshalAndUnmarshal(l Losser) error {
+	l1 := &LossMarshaler{L: l}
+	b, err := l1.MarshalJSON()
+	if err != nil {
+		return err
+	}
+	l2 := &LossMarshaler{}
+	err = l2.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	if !reflect.DeepEqual(l, l2.L) {
 		return doesNotMatch
 	}
 	return nil
@@ -66,7 +83,7 @@ func TestFromString(t *testing.T) {
 
 	// Try getting a non-registered type
 	f := &Fake{}
-	str := common.InterfaceFullname(f)
+	str := common.InterfaceFullTypename(f)
 
 	_, err := FromString(str)
 	if err != NotRegistered {
@@ -104,6 +121,11 @@ func TestSquaredDistance(t *testing.T) {
 	if err != nil {
 		t.Errorf("unregister error: " + err.Error())
 	}
+
+	err = testMarshalAndUnmarshal(&sq)
+	if err != nil {
+		t.Errorf("Error marshaling and unmarshaling")
+	}
 }
 
 func TestManhattanDistance(t *testing.T) {
@@ -125,6 +147,10 @@ func TestManhattanDistance(t *testing.T) {
 	err := testUnregister(&sq)
 	if err != nil {
 		t.Errorf("unregister error: " + err.Error())
+	}
+	err = testMarshalAndUnmarshal(&sq)
+	if err != nil {
+		t.Errorf("Error marshaling and unmarshaling")
 	}
 }
 
@@ -149,6 +175,10 @@ func TestRelativeSquared(t *testing.T) {
 	if err != nil {
 		t.Errorf("unregister error: " + err.Error())
 	}
+	err = testMarshalAndUnmarshal(&sq)
+	if err != nil {
+		t.Errorf("Error marshaling and unmarshaling")
+	}
 }
 
 func TestLogSquared(t *testing.T) {
@@ -170,5 +200,9 @@ func TestLogSquared(t *testing.T) {
 	err := testUnregister(&sq)
 	if err != nil {
 		t.Errorf("unregister error: " + err.Error())
+	}
+	err = testMarshalAndUnmarshal(&sq)
+	if err != nil {
+		t.Errorf("Error marshaling and unmarshaling")
 	}
 }
