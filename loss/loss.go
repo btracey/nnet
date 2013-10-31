@@ -32,8 +32,7 @@ var isPtrMap map[string]bool
 
 // Register adds a losser to the map with the name PkgPath + Name
 func Register(l Losser) {
-	pkgpath, name := common.InterfaceLocation(l)
-	str := filepath.Join(pkgpath, name)
+	str := common.InterfaceFullname(l)
 	b := reflect.ValueOf(l).Kind() == reflect.Ptr
 	losserMap[str] = l
 	isPtrMap[str] = b

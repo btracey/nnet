@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"reflect"
 )
 
@@ -48,6 +49,11 @@ type typeUnmarshaler struct {
 
 type valueUnmarshaler struct {
 	Value interface{}
+}
+
+func InterfaceFullname(i interface{}) string {
+	pkgpath, pkgname := InterfaceLocation(i)
+	return filepath.Join(pkgpath, pkgname)
 }
 
 func InterfaceLocation(i interface{}) (pkgpath string, name string) {

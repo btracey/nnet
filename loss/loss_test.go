@@ -3,6 +3,7 @@ package loss
 import (
 	//"encoding/json"
 	//"fmt"
+	"github.com/btracey/nnet/common"
 	"github.com/gonum/floats"
 	"math"
 	//"reflect"
@@ -15,17 +16,10 @@ const (
 	TOL    = 1E-14
 )
 
-/*
-type MarshalLosser interface {
-	Losser
-	json.Marshaler
+func testUnregister(l interface{}) error {
+	// Get the name and path
+	str := common.InterfaceFullname(l)
 }
-
-type UnmarshalLosser interface {
-	Losser
-	json.Unmarshaler
-}
-*/
 
 func finiteDifferenceLosser(losser Losser, prediction, truth []float64) (derivative, fdDerivative []float64) {
 	if len(prediction) != len(truth) {
