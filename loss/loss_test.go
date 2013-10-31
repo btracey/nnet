@@ -3,10 +3,11 @@ package loss
 import (
 	//"encoding/json"
 	//"fmt"
+	"errors"
 	"github.com/btracey/nnet/common"
 	"github.com/gonum/floats"
 	"math"
-	//"reflect"
+	"reflect"
 	"testing"
 )
 
@@ -16,9 +17,21 @@ const (
 	TOL    = 1E-14
 )
 
+var fromStringError error = errors.New("error from string")
+var doesNotMatch error = errors.New("unregistered not equal")
+
 func testUnregister(l interface{}) error {
 	// Get the name and path
 	str := common.InterfaceFullname(l)
+	losser, err := FromString(str)
+	if err != nil {
+		return fromStringError
+	}
+	b := reflect.DeepEqual(l, losser)
+	if !b {
+		return doesNotMatch
+	}
+	return nil
 }
 
 func finiteDifferenceLosser(losser Losser, prediction, truth []float64) (derivative, fdDerivative []float64) {
@@ -42,6 +55,35 @@ func finiteDifferenceLosser(losser Losser, prediction, truth []float64) (derivat
 	return
 }
 
+type Fake struct{}
+
+func (f Fake) LossAndDeriv(p []float64, t []float64, d []float64) float64 {
+	return 0
+}
+
+func TestFromString(t *testing.T) {
+	// Should test the package types in the package script
+
+	// Try getting a non-registered type
+	f := &Fake{}
+	str := common.InterfaceFullname(f)
+
+	_, err := FromString(str)
+	if err != NotRegistered {
+		t.Errorf("Unregistered type returned losser")
+	}
+	// Now try registering it and getting a new one back
+	Register(f)
+
+	l, err := FromString(str)
+	if err != nil {
+		t.Errorf("Error getting: " + err.Error())
+	}
+	if !reflect.DeepEqual(l, f) {
+		t.Errorf("Unequal after: " + err.Error())
+	}
+}
+
 func TestSquaredDistance(t *testing.T) {
 	prediction := []float64{1, 2, 3}
 	truth := []float64{1.1, 2.2, 2.7}
@@ -56,6 +98,11 @@ func TestSquaredDistance(t *testing.T) {
 	derivative, fdDerivative := finiteDifferenceLosser(sq, prediction, truth)
 	if !floats.EqualApprox(derivative, fdDerivative, FDTol) {
 		t.Errorf("Derivative doesn't match. deriv: %v, fdDeriv: %v ", derivative, fdDerivative)
+	}
+
+	err := testUnregister(&sq)
+	if err != nil {
+		t.Errorf("unregister error: " + err.Error())
 	}
 }
 
@@ -74,12 +121,11 @@ func TestManhattanDistance(t *testing.T) {
 	if !floats.EqualApprox(derivative, fdDerivative, FDTol) {
 		t.Errorf("Derivative doesn't match. \n deriv: %v \n fdDeriv: %v ", derivative, fdDerivative)
 	}
-	/*
-		err := JSONTest(ManhattanDistance{}, &ManhattanDistance{})
-		if err != nil {
-			t.Errorf("JSON error: " + err.Error())
-		}
-	*/
+
+	err := testUnregister(&sq)
+	if err != nil {
+		t.Errorf("unregister error: " + err.Error())
+	}
 }
 
 func TestRelativeSquared(t *testing.T) {
@@ -98,18 +144,11 @@ func TestRelativeSquared(t *testing.T) {
 	if !floats.EqualApprox(derivative, fdDerivative, FDTol) {
 		t.Errorf("Derivative doesn't match. \n deriv: %v \n fdDeriv: %v ", derivative, fdDerivative)
 	}
-
-	/*
-		a := RelativeSquared(2)
-		b := RelativeSquared(5)
-		c := &a
-		fmt.Println(c)
-
-			err := JSONTest(b, c)
-			if err != nil {
-				t.Errorf("JSON error: " + err.Error())
-			}
-	*/
+	a := RelativeSquared(0)
+	err := testUnregister(&a)
+	if err != nil {
+		t.Errorf("unregister error: " + err.Error())
+	}
 }
 
 func TestLogSquared(t *testing.T) {
@@ -118,7 +157,7 @@ func TestLogSquared(t *testing.T) {
 	trueloss := (math.Log(.1*.1+1) + math.Log(.2*.2+1) + math.Log(.3*.3+1)) / 3
 	derivative := []float64{0, 0, 0}
 
-	sq := &LogSquared{}
+	sq := LogSquared{}
 	loss := sq.LossAndDeriv(prediction, truth, derivative)
 	if math.Abs(loss-trueloss) > TOL {
 		t.Errorf("Loss doesn't match. %v found, %v expected", loss, trueloss)
@@ -127,10 +166,9 @@ func TestLogSquared(t *testing.T) {
 	if !floats.EqualApprox(derivative, fdDerivative, FDTol) {
 		t.Errorf("Derivative doesn't match. \n deriv: %v \n fdDeriv: %v ", derivative, fdDerivative)
 	}
-	/*
-		err := JSONTest(LogSquared{}, &LogSquared{})
-		if err != nil {
-			t.Errorf("JSON error: " + err.Error())
-		}
-	*/
+
+	err := testUnregister(&sq)
+	if err != nil {
+		t.Errorf("unregister error: " + err.Error())
+	}
 }
