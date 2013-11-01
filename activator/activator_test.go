@@ -8,46 +8,6 @@ import (
 	"testing"
 )
 
-type MarshalActivator interface {
-	Activator
-	json.Marshaler
-}
-
-type UnmarshalActivator interface {
-	Activator
-	json.Unmarshaler
-}
-
-func JSONTest(first MarshalActivator, second UnmarshalActivator) error {
-	b, err := first.MarshalJSON()
-	if err != nil {
-		return fmt.Errorf("Error marshaling")
-	}
-	err = second.UnmarshalJSON(b)
-	if err != nil {
-		return fmt.Errorf("Error unmarshaling")
-	}
-	if !(reflect.DeepEqual(first, reflect.ValueOf(second).Elem().Interface())) {
-		return fmt.Errorf("Unequal after unmarshal")
-	}
-
-	// Check package level function
-	b2, err := MarshalJSON(first)
-	if err != nil {
-		return fmt.Errorf("Error using package marshal: " + err.Error())
-	}
-
-	newActivator, err := UnmarshalJSON(b2)
-	if err != nil {
-		return fmt.Errorf("Error using package unmarshal: " + err.Error())
-	}
-
-	if !reflect.DeepEqual(newActivator, first) {
-		return fmt.Errorf("Not equal after package unmarshal")
-	}
-	return nil
-}
-
 // TODO: Add better tests for JSON
 
 func TestSigmoid(t *testing.T) {

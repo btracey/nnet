@@ -2,7 +2,6 @@ package activator
 
 import (
 	"encoding/gob"
-	"encoding/json"
 	"github.com/btracey/nnet/common"
 	"math"
 )
@@ -65,28 +64,6 @@ func (a Linear) Activate(sum float64) float64 {
 // with respect to the weighted sum
 func (a Linear) DActivateDCombination(sum, output float64) float64 {
 	return 1.0
-}
-
-func (a Linear) String() string {
-	return linearString
-}
-
-var linearMarshalString string = prefix + linearString
-
-// MarshalJSON marshalls the sigmoid into UTF-8 text
-func (a Linear) MarshalJSON() ([]byte, error) {
-	return json.Marshal(marshalName{Name: linearMarshalString})
-}
-
-// MarshalJSON marshalls the sigmoid into UTF-8 text
-func (a *Linear) UnmarshalJSON(input []byte) error {
-	s := &marshalName{}
-	json.Unmarshal(input, &s)
-	if s.Name != linearMarshalString {
-		return common.UnmarshalMismatch{Expected: linearMarshalString, Received: s.Name}
-	}
-	a = &Linear{}
-	return nil
 }
 
 const (

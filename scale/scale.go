@@ -5,6 +5,8 @@ import (
 	"errors"
 	"github.com/gonum/floats"
 	"math"
+
+	"github.com/btracey/nnet/common"
 )
 
 func init() {
