@@ -12,6 +12,11 @@ func init() {
 	gob.Register(&Linear{})
 	gob.Register(&Normal{})
 	gob.Register(&Probability{})
+
+	common.Register(&None{})
+	common.Register(&Linear{})
+	common.Register(&Normal{})
+	common.Register(&Probability{})
 }
 
 // IdenticalDimensions is an error type expressing that
