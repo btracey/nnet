@@ -1,13 +1,9 @@
 package loss
 
 import (
-	//"fmt"
-	//"encoding/json"
-	"errors"
 	"github.com/btracey/nnet/common"
 	"github.com/gonum/floats"
 	"math"
-	"reflect"
 	"testing"
 )
 
@@ -16,25 +12,6 @@ const (
 	FDTol  = 10E-8
 	TOL    = 1E-14
 )
-
-var doesNotMatch error = errors.New("Does not match")
-
-func testMarshalAndUnmarshal(l Losser) error {
-	l1 := &common.InterfaceMarshaler{I: l}
-	b, err := l1.MarshalJSON()
-	if err != nil {
-		return err
-	}
-	l2 := &common.InterfaceMarshaler{}
-	err = l2.UnmarshalJSON(b)
-	if err != nil {
-		return err
-	}
-	if !reflect.DeepEqual(l, l2.I) {
-		return doesNotMatch
-	}
-	return nil
-}
 
 func finiteDifferenceLosser(losser Losser, prediction, truth []float64) (derivative, fdDerivative []float64) {
 	if len(prediction) != len(truth) {
@@ -73,7 +50,7 @@ func TestSquaredDistance(t *testing.T) {
 		t.Errorf("Derivative doesn't match. deriv: %v, fdDeriv: %v ", derivative, fdDerivative)
 	}
 
-	err := testMarshalAndUnmarshal(sq)
+	err := common.InterfaceTestMarshalAndUnmarshal(sq)
 	if err != nil {
 		t.Errorf("Error marshaling and unmarshaling")
 	}
@@ -95,7 +72,7 @@ func TestManhattanDistance(t *testing.T) {
 		t.Errorf("Derivative doesn't match. \n deriv: %v \n fdDeriv: %v ", derivative, fdDerivative)
 	}
 
-	err := testMarshalAndUnmarshal(sq)
+	err := common.InterfaceTestMarshalAndUnmarshal(sq)
 	if err != nil {
 		t.Errorf("Error marshaling and unmarshaling")
 	}
@@ -118,7 +95,7 @@ func TestRelativeSquared(t *testing.T) {
 		t.Errorf("Derivative doesn't match. \n deriv: %v \n fdDeriv: %v ", derivative, fdDerivative)
 	}
 
-	err := testMarshalAndUnmarshal(sq)
+	err := common.InterfaceTestMarshalAndUnmarshal(sq)
 	if err != nil {
 		t.Errorf("Error marshaling and unmarshaling")
 	}
@@ -139,7 +116,7 @@ func TestLogSquared(t *testing.T) {
 	if !floats.EqualApprox(derivative, fdDerivative, FDTol) {
 		t.Errorf("Derivative doesn't match. \n deriv: %v \n fdDeriv: %v ", derivative, fdDerivative)
 	}
-	err := testMarshalAndUnmarshal(sq)
+	err := common.InterfaceTestMarshalAndUnmarshal(sq)
 	if err != nil {
 		t.Errorf("Error marshaling and unmarshaling")
 	}

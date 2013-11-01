@@ -1,11 +1,10 @@
 package activator
 
 import (
-	"encoding/json"
-	"fmt"
 	"math"
-	"reflect"
 	"testing"
+
+	"github.com/btracey/nnet/common"
 )
 
 // TODO: Add better tests for JSON
@@ -27,9 +26,9 @@ func TestSigmoid(t *testing.T) {
 		t.Errorf("Derivative does not match. %v expected, %v found", trueDeriv, deriv)
 	}
 
-	err := JSONTest(Sigmoid{}, &Sigmoid{})
+	err := common.InterfaceTestMarshalAndUnmarshal(s)
 	if err != nil {
-		t.Errorf("Error using JSON: " + err.Error())
+		t.Errorf("Error marshaling and unmarshaling")
 	}
 }
 
@@ -47,9 +46,9 @@ func TestLinear(t *testing.T) {
 		t.Errorf("Derivative does not match. %v expected, %v found", trueDeriv, deriv)
 	}
 
-	err := JSONTest(Linear{}, &Linear{})
+	err := common.InterfaceTestMarshalAndUnmarshal(s)
 	if err != nil {
-		t.Errorf("Error using JSON: " + err.Error())
+		t.Errorf("Error marshaling and unmarshaling")
 	}
 
 }
@@ -70,9 +69,9 @@ func TestTanh(t *testing.T) {
 	if math.Abs(deriv-float64(trueDeriv)) > 1E-15 {
 		t.Errorf("Derivative does not match. %v expected, %v found", trueDeriv, deriv)
 	}
-	err := JSONTest(Tanh{}, &Tanh{})
+	err := common.InterfaceTestMarshalAndUnmarshal(s)
 	if err != nil {
-		t.Errorf("Error using JSON: " + err.Error())
+		t.Errorf("Error marshaling and unmarshaling")
 	}
 }
 
@@ -93,8 +92,8 @@ func TestLinearTanh(t *testing.T) {
 		t.Errorf("Derivative does not match. %v expected, %v found", trueDeriv, deriv)
 	}
 
-	err := JSONTest(LinearTanh{}, &LinearTanh{})
+	err := common.InterfaceTestMarshalAndUnmarshal(s)
 	if err != nil {
-		t.Errorf("Error using JSON: " + err.Error())
+		t.Errorf("Error marshaling and unmarshaling")
 	}
 }
