@@ -1,8 +1,8 @@
 package loss
 
 import (
-	//"encoding/json"
 	//"fmt"
+	//"encoding/json"
 	"errors"
 	"github.com/btracey/nnet/common"
 	"github.com/gonum/floats"
@@ -17,35 +17,20 @@ const (
 	TOL    = 1E-14
 )
 
-var fromStringError error = errors.New("error from string")
-var doesNotMatch error = errors.New("unregistered not equal")
-
-func testUnregister(l interface{}) error {
-	// Get the name and path
-	str := common.InterfaceFullTypename(l)
-	losser, err := FromString(str)
-	if err != nil {
-		return fromStringError
-	}
-	b := reflect.DeepEqual(l, losser)
-	if !b {
-		return doesNotMatch
-	}
-	return nil
-}
+var doesNotMatch error = errors.New("Does not match")
 
 func testMarshalAndUnmarshal(l Losser) error {
-	l1 := &LossMarshaler{L: l}
+	l1 := &common.InterfaceMarshaler{I: l}
 	b, err := l1.MarshalJSON()
 	if err != nil {
 		return err
 	}
-	l2 := &LossMarshaler{}
+	l2 := &common.InterfaceMarshaler{}
 	err = l2.UnmarshalJSON(b)
 	if err != nil {
 		return err
 	}
-	if !reflect.DeepEqual(l, l2.L) {
+	if !reflect.DeepEqual(l, l2.I) {
 		return doesNotMatch
 	}
 	return nil
@@ -72,35 +57,6 @@ func finiteDifferenceLosser(losser Losser, prediction, truth []float64) (derivat
 	return
 }
 
-type Fake struct{}
-
-func (f Fake) LossAndDeriv(p []float64, t []float64, d []float64) float64 {
-	return 0
-}
-
-func TestFromString(t *testing.T) {
-	// Should test the package types in the package script
-
-	// Try getting a non-registered type
-	f := &Fake{}
-	str := common.InterfaceFullTypename(f)
-
-	_, err := FromString(str)
-	if err != NotRegistered {
-		t.Errorf("Unregistered type returned losser")
-	}
-	// Now try registering it and getting a new one back
-	Register(f)
-
-	l, err := FromString(str)
-	if err != nil {
-		t.Errorf("Error getting: " + err.Error())
-	}
-	if !reflect.DeepEqual(l, f) {
-		t.Errorf("Unequal after: " + err.Error())
-	}
-}
-
 func TestSquaredDistance(t *testing.T) {
 	prediction := []float64{1, 2, 3}
 	truth := []float64{1.1, 2.2, 2.7}
@@ -117,12 +73,7 @@ func TestSquaredDistance(t *testing.T) {
 		t.Errorf("Derivative doesn't match. deriv: %v, fdDeriv: %v ", derivative, fdDerivative)
 	}
 
-	err := testUnregister(&sq)
-	if err != nil {
-		t.Errorf("unregister error: " + err.Error())
-	}
-
-	err = testMarshalAndUnmarshal(&sq)
+	err := testMarshalAndUnmarshal(sq)
 	if err != nil {
 		t.Errorf("Error marshaling and unmarshaling")
 	}
@@ -144,11 +95,7 @@ func TestManhattanDistance(t *testing.T) {
 		t.Errorf("Derivative doesn't match. \n deriv: %v \n fdDeriv: %v ", derivative, fdDerivative)
 	}
 
-	err := testUnregister(&sq)
-	if err != nil {
-		t.Errorf("unregister error: " + err.Error())
-	}
-	err = testMarshalAndUnmarshal(&sq)
+	err := testMarshalAndUnmarshal(sq)
 	if err != nil {
 		t.Errorf("Error marshaling and unmarshaling")
 	}
@@ -170,12 +117,8 @@ func TestRelativeSquared(t *testing.T) {
 	if !floats.EqualApprox(derivative, fdDerivative, FDTol) {
 		t.Errorf("Derivative doesn't match. \n deriv: %v \n fdDeriv: %v ", derivative, fdDerivative)
 	}
-	a := RelativeSquared(0)
-	err := testUnregister(&a)
-	if err != nil {
-		t.Errorf("unregister error: " + err.Error())
-	}
-	err = testMarshalAndUnmarshal(&sq)
+
+	err := testMarshalAndUnmarshal(sq)
 	if err != nil {
 		t.Errorf("Error marshaling and unmarshaling")
 	}
@@ -196,12 +139,7 @@ func TestLogSquared(t *testing.T) {
 	if !floats.EqualApprox(derivative, fdDerivative, FDTol) {
 		t.Errorf("Derivative doesn't match. \n deriv: %v \n fdDeriv: %v ", derivative, fdDerivative)
 	}
-
-	err := testUnregister(&sq)
-	if err != nil {
-		t.Errorf("unregister error: " + err.Error())
-	}
-	err = testMarshalAndUnmarshal(&sq)
+	err := testMarshalAndUnmarshal(sq)
 	if err != nil {
 		t.Errorf("Error marshaling and unmarshaling")
 	}

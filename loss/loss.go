@@ -2,13 +2,8 @@ package loss
 
 import (
 	"encoding/gob"
-	"encoding/json"
-	"errors"
 	"github.com/btracey/nnet/common"
 	"math"
-	"reflect"
-
-	//"fmt"
 )
 
 func init() {
@@ -16,63 +11,12 @@ func init() {
 	gob.Register(ManhattanDistance{})
 	gob.Register(RelativeSquared(0))
 	gob.Register(LogSquared{})
-
-	losserMap = make(map[string]Losser)
-	//isPtrMap = make(map[string]bool)
-
-	// Add them to the losser
-	Register(&SquaredDistance{})
-	Register(&ManhattanDistance{})
+	common.Register(SquaredDistance{})
+	common.Register(ManhattanDistance{})
 	a := RelativeSquared(0)
-	Register(&a)
-	Register(&LogSquared{})
+	common.Register(a)
+	common.Register(LogSquared{})
 
-}
-
-type LossMarshaler struct {
-	L Losser
-}
-
-type lossMarshaler struct {
-	Type  string
-	Value Losser
-}
-
-type typeUnmarshaler struct {
-	Type string
-}
-
-type valueUnmarshaler struct {
-	Value Losser
-}
-
-func (l *LossMarshaler) MarshalJSON() ([]byte, error) {
-	name := common.InterfaceFullTypename(l.L)
-	// Check that the type has been registered
-	_, ok := losserMap[name]
-	if !ok {
-		return nil, NotRegistered
-	}
-	marshaler := &lossMarshaler{
-		Type:  name,
-		Value: l.L,
-	}
-	return json.Marshal(marshaler)
-}
-func (l *LossMarshaler) UnmarshalJSON(data []byte) error {
-	// First, unmarshal the type
-	t := &typeUnmarshaler{}
-	json.Unmarshal(data, t)
-	// Get the losser
-	losser, ok := losserMap[t.Type]
-	if !ok {
-		return NotRegistered
-	}
-
-	v := &valueUnmarshaler{Value: losser}
-	json.Unmarshal(data, v)
-	l.L = v.Value
-	return nil
 }
 
 // Losser is an interface for a loss function. It takes in three inputs
