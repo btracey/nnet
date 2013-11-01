@@ -75,34 +75,6 @@ func (l *LossMarshaler) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// losserMap is for converting a string to a losser
-var losserMap map[string]Losser
-
-// Register adds a losser to the map with the name PkgPath + Name.
-// Must register a pointer to the type (least surprise from unmarshaling)
-func Register(l Losser) {
-	b := reflect.ValueOf(l).Kind() == reflect.Ptr
-	if !b {
-		panic("Must register pointer to type")
-	}
-	str := common.InterfaceFullTypename(l)
-	losserMap[str] = l
-
-}
-
-var NotRegistered error = errors.New("nnet/loss: losser type not registered")
-
-// FromString returns a copy of the losser
-func FromString(str string) (Losser, error) {
-	val, ok := losserMap[str]
-	if !ok {
-		return nil, NotRegistered
-	}
-	// Make a copy of that type
-	newVal := reflect.New(reflect.TypeOf(val).Elem())
-	return newVal.Interface().(Losser), nil
-}
-
 // Losser is an interface for a loss function. It takes in three inputs
 // 1) the predicted input value
 // 2) the true value
