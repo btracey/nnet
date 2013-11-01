@@ -13,6 +13,11 @@ func init() {
 	gob.Register(Linear{})
 	gob.Register(Tanh{})
 	gob.Register(LinearTanh{})
+
+	common.Register(Sigmoid{})
+	common.Register(Linear{})
+	common.Register(Tanh{})
+	common.Register(LinearTanh{})
 }
 
 // Activator is an interface for the activation function of the neuron,
