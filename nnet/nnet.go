@@ -29,8 +29,6 @@ type Net struct {
 	Losser       loss.Losser  // The loss function for training (needed for computing the derivative)
 	InputScaler  scale.Scaler // The way in which the data should be scaled (and unscaled)
 	OutputScaler scale.Scaler // The way in which the data should be scaled (and unscaled)
-	//NeuronActivator activator.Activator
-	//FinalActivator  activator.Activator
 
 	nInputs            int
 	nOutputs           int
@@ -92,6 +90,7 @@ type netMarshal struct {
 	Parameters             []float64
 	NumLayers              int
 	NumNeuronsPerLayer     []int
+	Layers                 []Layer
 }
 
 // Save the net to a string file (for reading in to non-go programs for example). If custom
@@ -106,28 +105,20 @@ func (net *Net) MarshalJSON() (b []byte, err error) {
 	// First, martial the interfaces
 	n := &netMarshal{
 
-		Losser:                 &common.InterfaceMarshaler{Value: net.Losser},
-		InputScaler:            &common.InterfaceMarshaler{Value: net.InputScaler},
-		OutputScaler:           &common.InterfaceMarshaler{Value: net.OutputScaler},
+		Losser:                 &common.InterfaceMarshaler{I: net.Losser},
+		InputScaler:            &common.InterfaceMarshaler{I: net.InputScaler},
+		OutputScaler:           &common.InterfaceMarshaler{I: net.OutputScaler},
 		NumInputs:              net.nInputs,
 		NumOutputs:             net.nOutputs,
 		TotalNumParameters:     net.totalNumParameters,
+		NumLayers:              nLayers,
+		NumNeuronsPerLayer:     nNeuronsPerLayer,
 		NumParametersPerNeuron: net.nParameters,
 		ParameterIndex:         net.parameterIdx,
 		Parameters:             net.parametersSlice,
-		NumLayers:              nLayers,
-		NumNeuronsPerLayer:     nNeuronsPerLayer,
+		Layers:                 net.layers,
 	}
-	b, err = json.Marshal(n)
-	if err != nil {
-		return b, err
-	}
-
-	fmt.Println("Done marshaling in nnet")
-	//buf := make([]bytes, len(b))
-	//dst := bytes.NewBuffer(buf)
-	//err = json.Indent(dst, b, prefix, indent)
-	return b, err
+	return json.Marshal(n)
 }
 
 type lossUnmarshaler struct {
@@ -138,30 +129,27 @@ type lossUnmarshaler struct {
 // of the nnet suite, they must be
 func (net *Net) UnmarshalJSON(data []byte) error {
 	v := &netMarshal{}
-	// Populate the interfaces with their values from the net
-	if net.Losser == nil {
-		// Unmarshal the losser
-		t := &lossUnmarshaler{Losser: &common.InterfaceMarshaler{}}
-		err := json.Unmarshal(data, t)
-		if err != common.NoValue {
-			return err
-		}
-		if t.Losser.PkgPath != "github.com/btracey/nnet/loss" {
-			return errors.New("Losser not from nnet")
-		}
-	}
-	v.Losser.Value = net.Losser
-	v.InputScaler.Value = net.InputScaler
-	v.OutputScaler.Value = net.OutputScaler
-
-	fmt.Println("Just before unmarshal call nnet")
 	err := json.Unmarshal(data, v)
-	fmt.Printf("%#v\n", v)
 	if err != nil {
-		return fmt.Errorf("Error unmarshaling data: " + err.Error())
+		return fmt.Errorf("nnet/net/unmarshaljson: error unmarshaling data: " + err.Error())
 	}
+	// Now, unpack all the values
+	net.Losser = v.Losser.I.(loss.Losser)
+	net.InputScaler = v.InputScaler.I.(scale.Scaler)
+	net.OutputScaler = v.OutputScaler.I.(scale.Scaler)
+	net.nInputs = v.NumInputs
+	net.nOutputs = v.NumOutputs
+	net.totalNumParameters = v.TotalNumParameters
+	// TODO: Add layers
+	net.nParameters = v.NumParametersPerNeuron
+	net.parameterIdx = v.ParameterIndex
+	//net.parametersSlice = v.Parameters
+	net.layers = v.Layers
 
-	fmt.Println("%#v\n", v)
+	net.parameters, net.parametersSlice = net.NewPerParameterMemory()
+	for i, val := range v.Parameters {
+		net.parametersSlice[i] = val
+	}
 
 	return nil
 }
@@ -508,6 +496,27 @@ func DefaultRegression(nInputs, nOutputs, nHiddenLayers, nNeuronsPerHiddenLayer 
 // layer represents a layer of neurons
 type Layer struct {
 	Neurons []Neuron
+}
+
+func (l Layer) MarshalJSON() ([]byte, error) {
+	n := make([]*common.InterfaceMarshaler, len(l.Neurons))
+	for i := range l.Neurons {
+		n[i] = &common.InterfaceMarshaler{I: l.Neurons[i]}
+	}
+	return json.Marshal(n)
+}
+
+func (l *Layer) UnmarshalJSON(data []byte) error {
+	v := make([]*common.InterfaceMarshaler, 0)
+	err := json.Unmarshal(data, &v)
+	if err != nil {
+		return err
+	}
+	l.Neurons = make([]Neuron, len(v))
+	for i := range l.Neurons {
+		l.Neurons[i] = v[i].I.(Neuron)
+	}
+	return nil
 }
 
 // ProcessNeuron computes

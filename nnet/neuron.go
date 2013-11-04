@@ -2,18 +2,21 @@ package nnet
 
 import (
 	"github.com/btracey/nnet/activator"
+	"github.com/btracey/nnet/common"
 
 	"math"
 	"math/rand"
 
-	//"fmt"
+	"fmt"
 
 	//"bytes"
 	"encoding/gob"
+	"encoding/json"
 )
 
 func init() {
 	gob.Register(&SumNeuron{Activator: activator.LinearTanh{}})
+	common.Register(&SumNeuron{})
 }
 
 var (
@@ -90,4 +93,23 @@ func (s *SumNeuron) DCombineDInput(params []float64, inputs []float64, combinati
 		deriv[i] = params[i]
 	}
 	// This intentionally doesn't loop over all of the parameters, as the last parameter is the bias term
+}
+
+type activatorMarshaler struct {
+	Activator *common.InterfaceMarshaler
+}
+
+func (s *SumNeuron) MarshalJSON() (b []byte, err error) {
+	n := &activatorMarshaler{Activator: &common.InterfaceMarshaler{I: s.Activator}}
+	return json.Marshal(n)
+}
+
+func (s *SumNeuron) UnmarshalJSON(data []byte) error {
+	v := &activatorMarshaler{}
+	err := json.Unmarshal(data, v)
+	if err != nil {
+		return fmt.Errorf("nnet/neuron/unmarshaljson: error unmarshaling data: " + err.Error())
+	}
+	s.Activator = v.Activator.I.(activator.Activator)
+	return nil
 }

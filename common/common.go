@@ -3,10 +3,9 @@ package common
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"reflect"
-
-	//"fmt"
 )
 
 func init() {
@@ -75,12 +74,18 @@ func Register(i interface{}) {
 	//interfaceMap[str] = i
 }
 
-var NotRegistered error = errors.New("nnet/loss: losser type not registered")
+type NotRegistered struct {
+	Type string
+}
+
+func (n *NotRegistered) Error() string {
+	return fmt.Sprintf("common: type %s not registered", n.Type)
+}
 
 func ptrFromString(str string) (interface{}, bool, error) {
 	val, ok := interfaceMap[str]
 	if !ok {
-		return nil, false, NotRegistered
+		return nil, false, &NotRegistered{Type: str}
 	}
 	isPtr := str[len(str)-1:len(str)] == "*"
 
@@ -146,7 +151,7 @@ func (l *InterfaceMarshaler) MarshalJSON() ([]byte, error) {
 	// Check that the type has been registered
 	_, ok := interfaceMap[name]
 	if !ok {
-		return nil, NotRegistered
+		return nil, &NotRegistered{Type: name}
 	}
 	marshaler := &lossMarshaler{
 		Type:  name,

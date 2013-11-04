@@ -1,12 +1,12 @@
 package nnet
 
 import (
+	"encoding/json"
 	"github.com/btracey/nnet/loss"
 	"github.com/btracey/nnet/scale"
 	"github.com/gonum/floats"
-	"testing"
-
 	"math/rand"
+	"testing"
 
 	"fmt"
 	"reflect"
@@ -19,20 +19,19 @@ const (
 
 func TestJSON(t *testing.T) {
 	net := DefaultRegression(3, 4, 1, 10)
-	b, err := net.MarshalJSON()
+
+	data, err := json.Marshal(net)
 	if err != nil {
-		fmt.Println(string(b))
 		t.Errorf("Error marshaling net: " + err.Error())
 	}
-	str := string(b)
-	fmt.Println(str)
-
 	net2 := &Net{}
-	err = net2.UnmarshalJSON(b)
+	err = net2.UnmarshalJSON(data)
 	if err != nil {
 		t.Errorf("Error unmarshaling: " + err.Error())
 	}
-
+	if !reflect.DeepEqual(net, net2) {
+		t.Errorf("Net not equal after encoding and decoding")
+	}
 }
 
 func TestGob(t *testing.T) {
@@ -94,7 +93,14 @@ func TestGob(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error loading net: %v", err)
 	}
+	if !reflect.DeepEqual(net, net3) {
+		t.Errorf("Not equal after save and load")
+	}
 
+	net4, err := Load(filename)
+	if err != nil {
+		t.Errorf("Error loading net: %v", err)
+	}
 	if !reflect.DeepEqual(net, net3) {
 		t.Errorf("Not equal after save and load")
 	}
