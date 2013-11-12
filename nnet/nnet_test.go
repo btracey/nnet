@@ -101,7 +101,7 @@ func TestGob(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error loading net: %v", err)
 	}
-	if !reflect.DeepEqual(net, net3) {
+	if !reflect.DeepEqual(net, net4) {
 		t.Errorf("Not equal after save and load")
 	}
 }
