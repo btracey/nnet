@@ -15,11 +15,62 @@ import (
 	"runtime"
 )
 
+// TrainAll trains on all of the input data. This is prone to overfitting,
+// but may not be a problem if the input data is a good representation of
+// the true underlying data. The input and output data are modified
+// TODO: Should Inputs/Outputs really be public?
+type TrainAll struct {
+	net             *nnet.Net
+	Inputs          [][]float64
+	Outputs         [][]float64
+	chunkSize       int
+	dLossDParam     [][][]float64
+	dLossDParamFlat []float64
+	nInputs         int
+}
+
+func NewTrainAll(net *nnet.Net, losser loss.Losser, inputs, outputs [][]float64) *TrainAll {
+	t := &TrainAll{
+		net:     net,
+		Inputs:  inputs,
+		Outputs: outputs,
+	}
+	net.Losser = losser
+	t.dLossDParam, t.dLossDParamFlat = net.NewPerParameterMemory()
+	t.chunkSize = GetChunkSize(len(t.Inputs))
+	return t
+}
+
+func (t *TrainAll) ObjGrad(weights []float64) (loss float64, deriv []float64, err error) {
+	t.net.SetParametersSlice(weights)
+	loss = nnet.ParLossDeriv(t.Inputs, t.Outputs, t.net, t.dLossDParam, t.chunkSize)
+	loss /= float64(len(t.Inputs))
+	floats.Scale(1/float64(len(t.Inputs)), t.dLossDParamFlat)
+	return loss, t.dLossDParamFlat, nil
+}
+
+func (t *TrainAll) Scale() error {
+	SetScale(t.Inputs, t.Outputs, t.net)
+	err := scale.ScaleData(t.net.InputScaler, t.Inputs)
+	if err != nil {
+		return err
+	}
+	return scale.ScaleData(t.net.OutputScaler, t.Outputs)
+}
+
+func (t *TrainAll) Unscale() error {
+	err := scale.UnscaleData(t.net.InputScaler, t.Inputs)
+	if err != nil {
+		return err
+	}
+	return scale.UnscaleData(t.net.OutputScaler, t.Outputs)
+}
+
 var TestLossIncrease common.Status = 100
 
 // GetChunkSize returns the number of inputs per parallel goroutine
 func GetChunkSize(inputs int) int {
-	nCPU := runtime.NumCPU()
+	nCPU := runtime.GOMAXPROCS(-1)
 
 	chunkSize := inputs / nCPU
 	if chunkSize < 5 {

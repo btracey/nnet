@@ -4,6 +4,8 @@ import (
 	"encoding/gob"
 	"github.com/btracey/nnet/common"
 	"math"
+
+	//"fmt"
 )
 
 func init() {
@@ -84,6 +86,35 @@ func (r RelativeSquared) LossAndDeriv(prediction, truth, derivative []float64) (
 		derivative[i] = 2 * diffOverDenom / denom / nSamples
 	}
 	loss /= nSamples
+	/*
+		fmt.Println("Prediction: ", prediction)
+		fmt.Println("Truth:", truth)
+		fmt.Println("relsq=  ", r)
+		fmt.Println("loss= ", loss)
+	*/
+	return loss
+}
+
+// LogRelative finds the relative difference between the two samples and takes the log
+// of the absolute value of the difference as the loss function
+type LogRelative float64
+
+func (l LogRelative) LossAndDeriv(prediction, truth, derivative []float64) (loss float64) {
+	nSamples := float64(len(prediction))
+	for i := range prediction {
+		denom := math.Abs(truth[i]) + float64(r)
+		diff := prediction[i] - truth[i]
+
+		diffOverDenom := diff / denom
+		loss += diffOverDenom * diffOverDenom
+	}
+	loss /= nSamples
+
+	// d (log Loss) / dx = 1/loss * dLoss/dx
+	for i := range prediction {
+		derivative[i] = 2 * diffOverDenom / denom / nSamples / loss
+	}
+	loss = math.Log(loss + 1) // so the minimum loss is zero
 	return loss
 }
 
