@@ -13,12 +13,22 @@ import (
 )
 
 const (
-	netFDStep = 1e-6
-	netFDTol  = 1e-8
+	netFDStep = 1e-7
+	netFDTol  = 2e-8
 )
 
 func TestJSON(t *testing.T) {
 	net := DefaultRegression(3, 4, 1, 10)
+
+	nInputs := 3
+	nOutputs := 4
+	rInput := RandomData(nInputs, 100)
+	rOutput := RandomData(nOutputs, 100)
+	net.InputScaler = &scale.Linear{}
+	net.InputScaler.SetScale(rInput)
+	net.OutputScaler = &scale.Normal{}
+	net.OutputScaler.SetScale(rOutput)
+	net.Losser = loss.LogSquared{}
 
 	data, err := json.Marshal(net)
 	if err != nil {
@@ -40,7 +50,7 @@ func TestGob(t *testing.T) {
 	nLayers := 1
 	nNeuronsPerLayer := 7
 	rInput := RandomData(nInputs, 100)
-	rOutput := RandomData(nInputs, 100)
+	rOutput := RandomData(nOutputs, 100)
 
 	net := DefaultRegression(nInputs, nOutputs, nLayers, nNeuronsPerLayer)
 	net.InputScaler = &scale.Linear{}
@@ -229,7 +239,7 @@ func TestPredictSliceMatchPredict(t *testing.T) {
 
 // Test to make sure that the predictions and derivatives match
 func TestPredLossDeriv(t *testing.T) {
-	net := DefaultRegression(3, 2, 2, 4)
+	net := DefaultRegression(3, 2, 2, 50)
 	net.Losser = &loss.SquaredDistance{}
 	input := []float64{1, 2, 3}
 	truth := []float64{1.2, 2.2}
@@ -262,5 +272,8 @@ func TestPredLossDeriv(t *testing.T) {
 	}
 	if !floats.EqualApprox(dLossFlat, FDdLossFlat, netFDTol) {
 		t.Errorf("Finite difference doesn't match derivative")
+		for i := range dLossFlat {
+			fmt.Println(i, dLossFlat[i], FDdLossFlat[i], dLossFlat[i]-FDdLossFlat[i])
+		}
 	}
 }

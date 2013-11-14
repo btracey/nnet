@@ -5,7 +5,7 @@ import (
 	"github.com/btracey/nnet/common"
 	"math"
 
-	//"fmt"
+	"fmt"
 )
 
 func init() {
@@ -102,23 +102,37 @@ func (r RelativeSquared) LossAndDeriv(prediction, truth, derivative []float64) (
 type RelativeLog float64
 
 func (l RelativeLog) LossAndDeriv(prediction, truth, derivative []float64) (loss float64) {
-	nSamples := float64(len(prediction))
+	for i := range prediction {
+		fmt.Println("pred = ", prediction[i])
+		fmt.Println("truth = ", truth[i])
+	}
+	nDim := float64(len(prediction))
 	for i := range prediction {
 		denom := math.Abs(truth[i]) + float64(l)
+		fmt.Println("denom = ", denom)
 		diff := prediction[i] - truth[i]
+		fmt.Println("diff = ", diff)
 
 		diffOverDenom := diff / denom
+		fmt.Println("diff over denom = ", diffOverDenom)
 		loss += diffOverDenom * diffOverDenom
-		derivative[i] = 2 * diffOverDenom / denom / nSamples
+		derivative[i] = (2 / nDim) * diffOverDenom / denom
+		fmt.Println("Deriv in loop = ", derivative[i])
 	}
-	loss /= nSamples
-
+	loss /= nDim
+	fmt.Println("loss before log = ", loss)
 	// d (log Loss) / dx = 1/loss * dLoss/dx
 
 	for i := range prediction {
 		derivative[i] /= (loss + 1)
+		fmt.Println("deriv after divide = ", derivative[i])
 	}
 	loss = math.Log(loss + 1) // so the minimum loss is zero
+	fmt.Println("loss = ", loss)
+	for i := range derivative {
+		fmt.Println("deriv = ", derivative[i])
+	}
+	fmt.Println()
 	return loss
 }
 
