@@ -101,14 +101,15 @@ func TestRelativeSquared(t *testing.T) {
 	}
 }
 
-func TestRelativeSquared(t *testing.T) {
+func TestRelativeLog(t *testing.T) {
 	tol := 1e-2
 	prediction := []float64{1, -2, 3}
 	truth := []float64{1.1, -2.2, 2.7}
 	trueloss := ((.1/(1.1+tol))*(.1/(1.1+tol)) + (.2/(2.2+tol))*(.2/(2.2+tol)) + (.3/(2.7+tol))*(.3/(2.7+tol))) / 3
+	trueloss = math.Log(trueloss + 1)
 	derivative := []float64{0, 0, 0}
 
-	sq := RelativeSquared(tol)
+	sq := RelativeLog(tol)
 	loss := sq.LossAndDeriv(prediction, truth, derivative)
 	if math.Abs(loss-trueloss) > TOL {
 		t.Errorf("Loss doesn't match. %v found, %v expected", loss, trueloss)
@@ -120,7 +121,7 @@ func TestRelativeSquared(t *testing.T) {
 
 	err := common.InterfaceTestMarshalAndUnmarshal(sq)
 	if err != nil {
-		t.Errorf("Error marshaling and unmarshaling")
+		t.Errorf("Error marshaling and unmarshaling: " + err.Error())
 	}
 }
 

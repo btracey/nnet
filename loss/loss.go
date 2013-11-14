@@ -17,6 +17,8 @@ func init() {
 	common.Register(ManhattanDistance{})
 	a := RelativeSquared(0)
 	common.Register(a)
+	b := RelativeLog(0)
+	common.Register(b)
 	common.Register(LogSquared{})
 
 }
@@ -97,22 +99,24 @@ func (r RelativeSquared) LossAndDeriv(prediction, truth, derivative []float64) (
 
 // LogRelative finds the relative difference between the two samples and takes the log
 // of the absolute value of the difference as the loss function
-type LogRelative float64
+type RelativeLog float64
 
-func (l LogRelative) LossAndDeriv(prediction, truth, derivative []float64) (loss float64) {
+func (l RelativeLog) LossAndDeriv(prediction, truth, derivative []float64) (loss float64) {
 	nSamples := float64(len(prediction))
 	for i := range prediction {
-		denom := math.Abs(truth[i]) + float64(r)
+		denom := math.Abs(truth[i]) + float64(l)
 		diff := prediction[i] - truth[i]
 
 		diffOverDenom := diff / denom
 		loss += diffOverDenom * diffOverDenom
+		derivative[i] = 2 * diffOverDenom / denom / nSamples
 	}
 	loss /= nSamples
 
 	// d (log Loss) / dx = 1/loss * dLoss/dx
+
 	for i := range prediction {
-		derivative[i] = 2 * diffOverDenom / denom / nSamples / loss
+		derivative[i] /= (loss + 1)
 	}
 	loss = math.Log(loss + 1) // so the minimum loss is zero
 	return loss
