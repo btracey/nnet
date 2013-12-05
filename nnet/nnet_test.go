@@ -14,7 +14,7 @@ import (
 
 const (
 	netFDStep = 1e-7
-	netFDTol  = 2e-8
+	netFDTol  = 1e-7
 )
 
 func TestJSON(t *testing.T) {
@@ -93,13 +93,13 @@ func TestGob(t *testing.T) {
 		}
 	}
 
-	filename := "testnet.gob"
-	err = net.Save(filename)
+	filename := "testnet.json"
+	err = net.Save(filename, "json")
 	if err != nil {
 		t.Errorf("Error saving net: %v", err)
 	}
 
-	net3, err := Load(filename)
+	net3, err := Load(filename, "json")
 	if err != nil {
 		t.Errorf("Error loading net: %v", err)
 	}
@@ -107,7 +107,7 @@ func TestGob(t *testing.T) {
 		t.Errorf("Not equal after save and load")
 	}
 
-	net4, err := Load(filename)
+	net4, err := Load(filename, "json")
 	if err != nil {
 		t.Errorf("Error loading net: %v", err)
 	}

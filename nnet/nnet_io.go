@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -91,6 +92,12 @@ func (net *Net) MarshalJSON() (b []byte, err error) {
 			inputs[i][j] = rand.Float64()
 		}
 	}
+	for i := range inputs {
+		err := net.InputScaler.Unscale(inputs[i])
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	outputs, err := net.PredictSlice(inputs)
 	if err != nil {
@@ -133,6 +140,7 @@ func (net *Net) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return fmt.Errorf("nnet/net/unmarshaljson: error unmarshaling data: " + err.Error())
 	}
+	//fmt.Println(v)
 	// Now, unpack all the values
 	net.Losser = v.Losser.I.(loss.Losser)
 	net.InputScaler = v.InputScaler.I.(scale.Scaler)
@@ -194,24 +202,52 @@ func (net *Net) GobDecode(buf []byte) error {
 }
 
 // Save saves the neural net
-func (net *Net) Save(filename string) error {
-	bytes, err := net.GobEncode()
+func (net *Net) Save(filename string, ext string) error {
+	var b []byte
+	var err error
+	switch ext {
+	case "gob":
+		panic("not coded")
+		/*
+			b, err = net.GobEncode()
+			if err != nil {
+				return err
+			}
+		*/
+	case "json":
+		b, err = json.MarshalIndent(net, "", "\t")
+	default:
+		return errors.New("nnet save: unrecognized ext " + ext)
+	}
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filename, bytes, 0700)
+	return ioutil.WriteFile(filename, b, 0700)
 }
 
 // Load loads in a neural net from a file.
-func Load(filename string) (*Net, error) {
+func Load(filename, ext string) (*Net, error) {
+	//fmt.Println("net filename = ", filename)
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
-	net := &Net{}
-	err = net.GobDecode(bytes)
-	if err != nil {
-		return nil, err
+	if len(bytes) == 0 {
+		return nil, fmt.Errorf("No bytes")
 	}
-	return net, nil
+	net := &Net{}
+	switch ext {
+	case "gob":
+		//err = net.GobDecode(bytes)
+		panic("not coded")
+	case "json":
+		err := net.UnmarshalJSON(bytes)
+		if err != nil {
+			return nil, err
+		}
+		return net, nil
+
+	default:
+		return nil, errors.New("nnet save: unrecognized ext " + ext)
+	}
 }
