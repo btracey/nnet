@@ -243,6 +243,7 @@ func TestPredLossDeriv(t *testing.T) {
 	net.Losser = &loss.SquaredDistance{}
 	input := []float64{1, 2, 3}
 	truth := []float64{1.2, 2.2}
+	weight := 1.8
 	net.RandomizeParameters()
 	tmp := net.NewPredLossDerivTmpMemory()
 
@@ -251,7 +252,7 @@ func TestPredLossDeriv(t *testing.T) {
 	_, FDdLossFlat := net.NewPerParameterMemory()
 	params := make([]float64, net.TotalNumParameters())
 	net.ParametersSlice(params)
-	PredLossDeriv(input, truth, net, tmp, prediction, dLossDParam)
+	PredLossDeriv(input, truth, weight, net, tmp, prediction, dLossDParam)
 
 	predictTmp := make([]float64, len(truth))
 	dLossDPredTmp := make([]float64, len(truth))
@@ -262,14 +263,15 @@ func TestPredLossDeriv(t *testing.T) {
 		params[i] += netFDStep
 		net.SetParametersSlice(params)
 		Predict(input, net, predictTmp, combinations, outputs)
-		loss1 := net.Losser.LossAndDeriv(predictTmp, truth, dLossDPredTmp)
+		loss1 := weight * net.Losser.LossAndDeriv(predictTmp, truth, dLossDPredTmp)
 		params[i] -= 2 * netFDStep
 		net.SetParametersSlice(params)
 		Predict(input, net, predictTmp, combinations, outputs)
-		loss2 := net.Losser.LossAndDeriv(predictTmp, truth, dLossDPredTmp)
+		loss2 := weight * net.Losser.LossAndDeriv(predictTmp, truth, dLossDPredTmp)
 		params[i] += netFDStep
 		FDdLossFlat[i] = (loss1 - loss2) / (2 * netFDStep)
 	}
+
 	if !floats.EqualApprox(dLossFlat, FDdLossFlat, netFDTol) {
 		t.Errorf("Finite difference doesn't match derivative")
 		for i := range dLossFlat {

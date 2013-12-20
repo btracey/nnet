@@ -10,6 +10,14 @@ import (
 	//"fmt"
 )
 
+func RandomWeights(first int) []float64 {
+	weights := make([]float64, first)
+	for i := range weights {
+		weights[i] = 20 * rand.Float64()
+	}
+	return weights
+}
+
 func RandomSliceOfSlice(first, second int) (sos [][]float64) {
 	sos = make([][]float64, first)
 	for i := range sos {
@@ -21,13 +29,13 @@ func RandomSliceOfSlice(first, second int) (sos [][]float64) {
 	return
 }
 
-func DoParAndSeqMatch(inputs, truths [][]float64, net *Net, chunkSize int) bool {
+func DoParAndSeqMatch(inputs, truths [][]float64, weights []float64, net *Net, chunkSize int) bool {
 	net.RandomizeParameters()
 	dLossDParamSeq, dLossDParamSeqFlat := net.NewPerParameterMemory()
 	p := NewParLossDerivMemory(net)
-	SeqLossDeriv(inputs, truths, net, dLossDParamSeq, p)
+	SeqLossDeriv(inputs, truths, weights, net, dLossDParamSeq, p)
 	dLossDParamPar, dLossDParamParFlat := net.NewPerParameterMemory()
-	ParLossDeriv(inputs, truths, net, dLossDParamPar, chunkSize)
+	ParLossDeriv(inputs, truths, weights, net, dLossDParamPar, chunkSize)
 
 	floats.Scale(float64(1/len(inputs)), dLossDParamParFlat)
 	floats.Scale(float64(1/len(inputs)), dLossDParamSeqFlat)
@@ -41,8 +49,9 @@ func TestParLossDeriv(t *testing.T) {
 	nInputs := 1000
 	inputs := RandomSliceOfSlice(nInputs, 3)
 	truths := RandomSliceOfSlice(nInputs, 2)
+	weights := RandomWeights(nInputs)
 	chunkSize := 8
-	if !DoParAndSeqMatch(inputs, truths, net, chunkSize) {
+	if !DoParAndSeqMatch(inputs, truths, weights, net, chunkSize) {
 		t.Errorf("Par and seq don't match")
 	}
 }

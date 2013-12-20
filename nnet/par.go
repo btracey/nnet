@@ -22,12 +22,12 @@ func NewParLossDerivMemory(net *Net) *ParLossDerivMemory {
 	return p
 }
 
-func SeqLossDeriv(inputs, truths [][]float64, net *Net, dLossDParam [][][]float64, p *ParLossDerivMemory) (loss float64) {
+func SeqLossDeriv(inputs, truths [][]float64, weights []float64, net *Net, dLossDParam [][][]float64, p *ParLossDerivMemory) (loss float64) {
 	// Compute first loss and store in it dLossDParam
-	loss = PredLossDeriv(inputs[0], truths[0], net, p.derivTmp, p.predictionTmp, dLossDParam)
+	loss = PredLossDeriv(inputs[0], truths[0], weights[0], net, p.derivTmp, p.predictionTmp, dLossDParam)
 	// Sum up the next losses and derivatives
 	for i := 1; i < len(inputs); i++ {
-		newLoss := PredLossDeriv(inputs[i], truths[i], net, p.derivTmp, p.predictionTmp, p.dLossDParamTmp)
+		newLoss := PredLossDeriv(inputs[i], truths[i], weights[i], net, p.derivTmp, p.predictionTmp, p.dLossDParamTmp)
 
 		//fmt.Println("input", inputs[i])
 		//fmt.Println("truth", truths[i])
@@ -49,7 +49,7 @@ type Result struct {
 	loss        float64
 }
 
-func ParLossDeriv(inputs, truths [][]float64, net *Net, dLossDParam [][][]float64, chunkSize int) (loss float64) {
+func ParLossDeriv(inputs, truths [][]float64, weights []float64, net *Net, dLossDParam [][][]float64, chunkSize int) (loss float64) {
 	// Zero out dLossDParam
 	for i, lay := range dLossDParam {
 		for j, neur := range lay {
@@ -74,7 +74,7 @@ func ParLossDeriv(inputs, truths [][]float64, net *Net, dLossDParam [][][]float6
 		nSent++
 		go func(startInd, endInd int, c chan *Result) {
 			dLossDParam, _ := net.NewPerParameterMemory()
-			loss := SeqLossDeriv(inputs[startInd:endInd], truths[startInd:endInd], net, dLossDParam, NewParLossDerivMemory(net))
+			loss := SeqLossDeriv(inputs[startInd:endInd], truths[startInd:endInd], weights[startInd:endInd], net, dLossDParam, NewParLossDerivMemory(net))
 			c <- &Result{loss: loss, dLossDParam: dLossDParam}
 		}(startInd, endInd, receiveChan)
 

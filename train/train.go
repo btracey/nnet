@@ -2,16 +2,16 @@ package train
 
 import (
 	"github.com/btracey/gofunopter/common"
-	"github.com/btracey/gofunopter/common/display"
+	//"github.com/btracey/gofunopter/common/display"
 	"github.com/btracey/nnet/loss"
 	"github.com/btracey/nnet/nnet"
 	"github.com/btracey/nnet/scale"
 
 	"github.com/gonum/floats"
-	"math/rand"
-	"sync"
+	//"math/rand"
+	//"sync"
 
-	"fmt"
+	//"fmt"
 	"runtime"
 )
 
@@ -23,29 +23,42 @@ type TrainAll struct {
 	net             *nnet.Net
 	Inputs          [][]float64
 	Outputs         [][]float64
+	Weights         []float64
 	chunkSize       int
 	dLossDParam     [][][]float64
 	dLossDParamFlat []float64
 	nInputs         int
 }
 
-func NewTrainAll(net *nnet.Net, losser loss.Losser, inputs, outputs [][]float64) *TrainAll {
+func NewTrainAll(net *nnet.Net, losser loss.Losser, inputs, outputs [][]float64, weights []float64) *TrainAll {
 	t := &TrainAll{
 		net:     net,
 		Inputs:  inputs,
 		Outputs: outputs,
+		Weights: weights,
 	}
 	net.Losser = losser
+	for _, weight := range weights {
+		if weight < 0 {
+			panic("negative weight")
+		}
+	}
+	// Scale the weights
+	sumWeights := floats.Sum(weights)
+	floats.Scale(1/sumWeights, t.Weights)
+
 	t.dLossDParam, t.dLossDParamFlat = net.NewPerParameterMemory()
 	t.chunkSize = GetChunkSize(len(t.Inputs))
 	return t
 }
 
-func (t *TrainAll) ObjGrad(weights []float64) (loss float64, deriv []float64, err error) {
-	t.net.SetParametersSlice(weights)
-	loss = nnet.ParLossDeriv(t.Inputs, t.Outputs, t.net, t.dLossDParam, t.chunkSize)
-	loss /= float64(len(t.Inputs))
-	floats.Scale(1/float64(len(t.Inputs)), t.dLossDParamFlat)
+func (t *TrainAll) ObjGrad(parameters []float64) (loss float64, deriv []float64, err error) {
+	t.net.SetParametersSlice(parameters)
+	loss = nnet.ParLossDeriv(t.Inputs, t.Outputs, t.Weights, t.net, t.dLossDParam, t.chunkSize)
+
+	// Don't need these here with weights
+	//loss /= float64(len(t.Inputs))
+	//floats.Scale(1/float64(len(t.Inputs)), t.dLossDParamFlat)
 	return loss, t.dLossDParamFlat, nil
 }
 
@@ -144,6 +157,7 @@ func UnscaleTrainingData(net *nnet.Net, trainInputs, trainOutputs, testInputs, t
 	return nil
 }
 
+/*
 // OneFoldTrain trains the net by splitting the data into a training and a testing
 // fold and stopping when the testing fold has
 type OneFoldTrain struct {
@@ -277,3 +291,4 @@ func (o *OneFoldTrain) AddToHistory(testLoss float64) {
 		o.History = append(o.History, testLoss)
 	}
 }
+*/

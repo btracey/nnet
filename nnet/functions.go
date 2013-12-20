@@ -1,5 +1,9 @@
 package nnet
 
+import (
+	"github.com/gonum/floats"
+)
+
 // ProcessNeuron computes
 func ProcessNeuron(neuron Neuron, parameters, inputs []float64) (combination, output float64) {
 	combination = neuron.Combine(parameters, inputs)
@@ -69,9 +73,13 @@ type PredLossDerivTmpMemory struct {
 
 // DerivPredLoss predicts the value at the input, compute the value of the loss,
 // and computes the derivative of the loss with respect to the parameters
-func PredLossDeriv(input []float64, truth []float64, net *Net, tmp *PredLossDerivTmpMemory, prediction []float64, dLossDParam [][][]float64) (loss float64) {
+func PredLossDeriv(input []float64, truth []float64, weight float64, net *Net, tmp *PredLossDerivTmpMemory, prediction []float64, dLossDParam [][][]float64) (loss float64) {
 	Predict(input, net, prediction, tmp.combinations, tmp.outputs)
 	loss = net.Losser.LossAndDeriv(prediction, truth, tmp.dLossDPred)
+
+	// scale the loss and derivative by the weight
+	loss *= weight
+	floats.Scale(weight, tmp.dLossDPred)
 	Derivative(input, net.layers, net.parameters, tmp.dLossDPred, tmp.combinations, tmp.outputs, tmp.dLossDOutput, tmp.dLossDInput, dLossDParam)
 	return loss
 }
